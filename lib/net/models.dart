@@ -118,6 +118,20 @@ class CharacterView {
 
   bool get isDead => hp <= 0;
 
+  CharacterView copyWith({int? hp, int? shield, Cell? position, DieFace? face, bool? isFaceLocked}) => CharacterView(
+        id: id,
+        catalogId: catalogId,
+        name: name,
+        hp: hp ?? this.hp,
+        maxHp: maxHp,
+        shield: shield ?? this.shield,
+        baseSpeed: baseSpeed,
+        baseDie: baseDie,
+        face: face ?? this.face,
+        isFaceLocked: isFaceLocked ?? this.isFaceLocked,
+        position: position ?? this.position,
+      );
+
   factory CharacterView.fromJson(Json j) => CharacterView(
         id: j['id'] as String,
         catalogId: j['catalogId'] as String? ?? '',

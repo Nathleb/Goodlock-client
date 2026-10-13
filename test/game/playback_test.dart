@@ -71,13 +71,18 @@ void main() {
     expect(plan[1].beats.map((x) => (x.kind, x.amount)), [(BeatKind.shieldLoss, 1), (BeatKind.damage, 2)]);
   });
 
+  test('startOfNextRound clears shields and keeps everything else', () {
+    final next = startOfNextRound([ch('a', hp: 4, shield: 3, slot: 2)]).single;
+    expect((next.hp, next.shield, next.position), (4, 0, const Cell(0, 2)));
+  });
+
   test('replaying a recorded round from the previous state lands on the recorded end state', () {
     final raw = (jsonDecode(File('test/fixtures/round_resolved.json').readAsStringSync()) as List)
         .map((j) => RoundResolved.fromJson(j as Json))
         .toList();
     for (var i = 1; i < raw.length; i++) {
-      // Between rounds the server only rerolls dice, so the previous end state is this round's start.
-      final before = raw[i - 1].gameState.players.expand((p) => p.team).toList();
+      // Between rounds the server resets shields (endOfRound) and rerolls dice.
+      final before = startOfNextRound(raw[i - 1].gameState.players.expand((p) => p.team).toList());
       final end = replayHp(before, raw[i].resolveLog);
       for (final c in raw[i].gameState.players.expand((p) => p.team)) {
         expect(end[c.id], (c.hp, c.shield), reason: '${c.name} after round ${i + 1}');

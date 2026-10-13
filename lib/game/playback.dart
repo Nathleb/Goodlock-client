@@ -66,3 +66,8 @@ Map<String, (int, int)> replayHp(List<CharacterView> before, List<ResolveStep> l
   }
   return state;
 }
+
+/// The board at the start of the next round: the server resets shields in endOfRound
+/// (dice are rerolled too, which the Resolve animation doesn't show).
+List<CharacterView> startOfNextRound(List<CharacterView> endOfRound) =>
+    [for (final c in endOfRound) c.copyWith(shield: 0)];
