@@ -5,7 +5,9 @@ import '../net/api.dart';
 /// App-wide connection state: which server, and the authenticated API client.
 class AppSession {
   static const _serverKey = 'serverUrl';
-  static const defaultServer = 'http://localhost:3000';
+  /// Overridable at build time, e.g. `--dart-define=SERVER_URL=http://10.0.2.2:3000` for the emulator
+  /// (10.0.2.2 is the host machine as seen from the Android emulator).
+  static const defaultServer = String.fromEnvironment('SERVER_URL', defaultValue: 'http://localhost:3000');
 
   String serverUrl;
   Api? api;
