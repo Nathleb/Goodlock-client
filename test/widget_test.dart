@@ -1,30 +1,22 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:goodlock_app/app/session.dart';
 import 'package:goodlock_app/main.dart';
+import 'package:goodlock_app/screens/resolve_demo_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('starts on the login screen with the configured server', (tester) async {
+    await tester.pumpWidget(GoodlockApp(session: AppSession('https://example.trycloudflare.com')));
+    expect(find.text('Goodlock'), findsOneWidget);
+    expect(find.text('Se connecter'), findsOneWidget);
+    expect(find.text('Créer un compte'), findsOneWidget);
+    expect(find.text('https://example.trycloudflare.com'), findsOneWidget);
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('the offline demo opens without a server', (tester) async {
+    await tester.pumpWidget(GoodlockApp(session: AppSession('http://unreachable')));
+    await tester.tap(find.text('Démo Resolve hors ligne'));
     await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(ResolveDemoScreen), findsOneWidget);
   });
 }
