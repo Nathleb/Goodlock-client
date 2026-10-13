@@ -19,7 +19,8 @@ class StepPlan {
   final bool skipped;
   final List<ResolvedEffect> effects; // labels + resolved cells, for VFX
   final List<Beat> beats;
-  const StepPlan(this.actorId, this.skipped, this.effects, this.beats);
+  final Map<String, CharacterView> after; // server view of each changed character after this action
+  const StepPlan(this.actorId, this.skipped, this.effects, this.beats, this.after);
 }
 
 /// Turns the server's resolve log into animation beats by diffing each change
@@ -37,7 +38,8 @@ List<StepPlan> planRound(List<CharacterView> before, List<ResolveStep> log) {
       if (prev == null) continue;
       beats.addAll(_diff(prev, next));
     }
-    plans.add(StepPlan(step.characterId, step.skipped, step.effects, beats));
+    plans.add(StepPlan(step.characterId, step.skipped, step.effects, beats,
+        {for (final c in step.changes) c.characterId: c.after}));
   }
   return plans;
 }
