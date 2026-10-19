@@ -29,7 +29,7 @@ Flutter SDK: `~/development/flutter` (on `PATH` via `~/.zshrc`). Android SDK: `~
 
 ```
 lib/net/      REST + Socket.IO client, protocol models (fromJson)
-lib/screens/  Flutter screens (Material 3, portrait, touch targets >= 44 px)
+lib/screens/  Flutter screens (Material 3, forced landscape, touch targets >= 44 px)
 lib/game/     Flame components and scenes
 tool/         dev scripts (headless bot match)
 test/         unit/widget tests; test/fixtures/ holds real payloads recorded from the backend
@@ -38,6 +38,8 @@ test/         unit/widget tests; test/fixtures/ holds real payloads recorded fro
 ## Rules
 
 - Mobile first: judge feel on a device build, not on an emulator or desktop.
+- Forced landscape, full screen (immersive). The combat board is two facing columns: the viewer on the
+  left, the opponent on the right, slot 0 on top, the centre band free for captions and controls.
 - The client is display-only: never compute game outcomes locally; animate what the server sent.
 - Protocol models mirror backend DTOs exactly; parsing is unit-tested against recorded payloads.
 - Game sizes (deck 6, team 4, board 5 cells with one empty) live in `lib/net/rules.dart`, mirrored from the
