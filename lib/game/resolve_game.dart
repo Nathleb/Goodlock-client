@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../net/models.dart';
+import '../net/rules.dart';
 import 'character_token.dart';
 import 'playback.dart';
 
@@ -20,7 +21,8 @@ const _effectColors = {
   'Swap': Color(0xFFC08BFF),
 };
 
-/// Plays the server's resolve log on a 2×5 board with impact, numbers, shakes and haptics.
+/// Plays the server's resolve log on a landscape board, two facing columns of [boardSize] cells
+/// (the viewer on the left, slot 0 on top), with impact, numbers, shakes and haptics.
 /// Display only: every number shown comes from the server's `changes`.
 class ResolveGame extends FlameGame with HasTimeScale {
   int viewerIndex;
@@ -28,6 +30,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
   bool haptics = true;
   final caption = ValueNotifier<String>('');
   final _tokens = <String, CharacterToken>{};
+  final _cellFrames = <RectangleComponent>[];
   bool _busy = false;
 
   ResolveGame({this.viewerIndex = 0});
@@ -42,16 +45,41 @@ class ResolveGame extends FlameGame with HasTimeScale {
     camera.viewfinder.anchor = Anchor.topLeft;
   }
 
-  Vector2 get _cardSize {
-    final w = min(size.x / 5.25, size.y / 4.0);
-    return Vector2(w, w * 1.3);
+  /// A card fills most of its cell height, so the [boardSize] rows always fit.
+  Vector2 get cardSize {
+    final h = min(size.y / boardSize * 0.88, size.x / 6 * 1.3);
+    return Vector2(h / 1.3, h);
   }
 
   Vector2 cellCenter(Cell c) {
     final mine = c.playerIndex == viewerIndex;
-    final x = (c.slot + 0.5) * size.x / 5;
-    final y = size.y * (mine ? 0.70 : 0.30);
+    final x = size.x * (mine ? 0.18 : 0.82);
+    final y = (c.slot + 0.5) * size.y / boardSize;
     return Vector2(x, y);
+  }
+
+  /// Faint frames for every cell, so an empty cell still reads as a cell.
+  void _drawCells() {
+    for (final f in _cellFrames) {
+      f.removeFromParent();
+    }
+    _cellFrames.clear();
+    for (final pi in [0, 1]) {
+      for (var slot = 0; slot < boardSize; slot++) {
+        final frame = RectangleComponent(
+          size: cardSize,
+          anchor: Anchor.center,
+          position: cellCenter(Cell(pi, slot)),
+          priority: -1,
+          paint: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5
+            ..color = const Color(0x22FFFFFF),
+        );
+        _cellFrames.add(frame);
+        world.add(frame);
+      }
+    }
   }
 
   /// Puts characters on the board without animation.
@@ -60,8 +88,9 @@ class ResolveGame extends FlameGame with HasTimeScale {
       t.removeFromParent();
     }
     _tokens.clear();
+    _drawCells();
     for (final c in characters) {
-      final token = CharacterToken(c, isMine: c.position.playerIndex == viewerIndex, cardSize: _cardSize, center: cellCenter(c.position));
+      final token = CharacterToken(c, isMine: c.position.playerIndex == viewerIndex, cardSize: cardSize, center: cellCenter(c.position));
       _tokens[c.id] = token;
       world.add(token);
     }
@@ -99,9 +128,10 @@ class ResolveGame extends FlameGame with HasTimeScale {
     await _fx(actor, ScaleEffect.to(Vector2.all(1.12), EffectController(duration: 0.12, curve: Curves.easeOut)));
 
     final hostile = step.effects.any((e) => e.effect == 'Damage' && !e.fizzled);
+    // Lunge toward the opposing column.
+    final towardFoe = actor.isMine ? 1.0 : -1.0;
     if (hostile) {
-      final dir = actor.isMine ? -1.0 : 1.0;
-      await _fx(actor, MoveByEffect(Vector2(0, dir * actor.size.y * 0.28), EffectController(duration: 0.09, curve: Curves.easeIn)));
+      await _fx(actor, MoveByEffect(Vector2(towardFoe * actor.size.x * 0.35, 0), EffectController(duration: 0.09, curve: Curves.easeIn)));
     }
 
     // Impact rings on every resolved cell.
@@ -126,8 +156,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
     await Future.wait(reactions);
 
     if (hostile) {
-      final dir = actor.isMine ? 1.0 : -1.0;
-      await _fx(actor, MoveByEffect(Vector2(0, dir * actor.size.y * 0.28), EffectController(duration: 0.16, curve: Curves.easeOut)));
+      await _fx(actor, MoveByEffect(Vector2(-towardFoe * actor.size.x * 0.35, 0), EffectController(duration: 0.16, curve: Curves.easeOut)));
     }
     await _fx(actor, ScaleEffect.to(Vector2.all(actor.character.isDead ? 0.85 : 1.0), EffectController(duration: 0.12)));
     actor.priority = 0;
@@ -191,7 +220,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
 
   void _ring(Vector2 at, Color color) {
     final ring = CircleComponent(
-      radius: _cardSize.x * 0.3,
+      radius: cardSize.x * 0.3,
       anchor: Anchor.center,
       position: at,
       priority: 5,
