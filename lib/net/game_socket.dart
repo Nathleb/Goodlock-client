@@ -76,7 +76,8 @@ class GameSocket {
   void startGame() => _socket.emit('startGame');
   void confirmSelection(List<String> catalogIds) => _socket.emit('confirmSelection', {'characterIds': catalogIds});
   void cancelSelection() => _socket.emit('cancelSelection');
-  void rearrangeTeam(List<String> characterIds) => _socket.emit('rearrangeTeam', {'characterIds': characterIds});
+  /// [slots] reads like the board: a character id per cell, null for the empty cell.
+  void rearrangeTeam(List<String?> slots) => _socket.emit('rearrangeTeam', {'slots': slots});
   void confirmPlacement() => _socket.emit('confirmPlacement');
   void cancelPlacement() => _socket.emit('cancelPlacement');
   void confirmKeep(List<String> lockedCharacterIds) =>

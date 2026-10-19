@@ -56,18 +56,17 @@ class Bot {
           failures.add('$name: SELECTION without selection view');
           return;
         }
-        if (sel.decks.any((d) => d.length != 7)) failures.add('$name: decks are not 7-strong');
+        if (sel.decks.any((d) => d.length != deckSize)) failures.add('$name: decks are not $deckSize-strong');
         if (!ready && !_picked) {
           _picked = true;
           final mine = sel.decks[me].map((c) => c.id).toList()..shuffle(rng);
-          socket.confirmSelection(mine.take(5).toList());
+          socket.confirmSelection(mine.take(teamSize).toList());
         }
       case Phase.placement:
-        if (gs.players[me].team.length != 5) failures.add('$name: own team is not 5 at placement');
+        if (gs.players[me].team.length != teamSize) failures.add('$name: own team is not $teamSize at placement');
         if (!ready && !_placed) {
           _placed = true;
-          final ids = gs.players[me].team.map((c) => c.id).toList().reversed.toList();
-          socket.rearrangeTeam(ids);
+          socket.rearrangeTeam(placementSlots(gs.players[me].team.map((c) => c.id).toList(), rng));
           socket.confirmPlacement();
         }
       case Phase.keep:

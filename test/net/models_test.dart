@@ -66,16 +66,16 @@ void main() {
         {'playerIndex': 1, 'team': []},
       ],
       'selection': {
-        'decks': [List.filled(7, catalogChar), List.filled(7, catalogChar)],
-        'myPicks': ['eve', 'eve', 'eve', 'eve', 'eve'],
+        'decks': [List.filled(6, catalogChar), List.filled(6, catalogChar)],
+        'myPicks': ['eve', 'eve', 'eve', 'eve'],
       },
       'afkClaimInMs': 120000,
     });
     expect(gs.phase, Phase.selection);
     expect(gs.playersReady, [true, false]);
-    expect(gs.selection!.decks[1], hasLength(7));
+    expect(gs.selection!.decks[1], hasLength(6));
     expect(gs.selection!.decks[0].first.name, 'Eve');
-    expect(gs.selection!.myPicks, hasLength(5));
+    expect(gs.selection!.myPicks, hasLength(4));
     expect(gs.afkClaimInMs, 120000);
   });
 
