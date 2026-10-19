@@ -54,16 +54,21 @@ the server is reachable and wants a login).
 1. Phone: Settings → About phone → tap *Build number* 7 times (developer options).
 2. Developer options → **Wireless debugging** on (phone and PC on the same Wi-Fi).
 3. Wireless debugging → *Pair device with pairing code*: note `IP:port` and the 6-digit code.
-4. PC:
+4. PC, while the pairing dialog is still open (its port and code die when it closes):
 
    ```bash
-   adb pair <ip>:<pairing-port>      # enter the code
-   adb connect <ip>:<port>           # the port shown on the main Wireless debugging screen
-   adb devices                       # the phone is listed
+   tool/phone.sh pair <ip>:<pairing-port> <code>   # "Successfully paired"
+   tool/phone.sh connect <ip>:<port>               # port from the main Wireless debugging screen
    ```
 
-The connect port changes when wireless debugging restarts; re-run `adb connect` with the new
-one (pairing stays valid).
+The connect port changes when wireless debugging restarts; re-run `tool/phone.sh connect` with
+the new one (pairing stays valid).
+
+`tool/phone.sh` wraps `adb` because of a mirrored-networking quirk: connecting to a *closed*
+localhost port hangs instead of being refused, so a plain `adb devices`, `adb pair` or
+`adb kill-server` hangs forever when no adb server runs yet. The script starts the server
+directly (`adb nodaemon server`) when nothing listens on :5037. Without the script:
+`adb nodaemon server &`, then the usual `adb` commands.
 
 ## Daily loop
 
@@ -76,13 +81,30 @@ npm run start:dev                 # watch mode, port 3000
 
 # 3. App on the phone, with hot reload
 cd ../Goodlock-app
-adb connect <phone-ip>:<port>     # if not connected
-flutter run --dart-define=SERVER_URL=http://<PC-IP>:3000
+tool/phone.sh connect <phone-ip>:<port>   # if not connected
+tool/phone.sh run                         # flutter run on the phone, SERVER_URL=http://<PC-IP>:3000
 ```
 
-In the `flutter run` terminal: `r` hot reload (about a second, keeps the current screen),
-`R` hot restart, `q` quit. This is a debug build: fine for layout and logic, a bit less smooth
-than release.
+`tool/phone.sh run` picks the phone (it shows up twice: `ip:port` and its mDNS name), uses the
+PC's LAN IP for `SERVER_URL` (override with `SERVER_URL=… tool/phone.sh run`) and passes extra
+arguments to `flutter run` (e.g. `--release`).
+
+No APK to rebuild while you code. The first run builds and installs a debug build (a few
+minutes); after that the terminal stays attached to the phone and pushes your Dart changes:
+
+- `r` hot reload (about a second, keeps the current screen and its state),
+- `R` hot restart (a few seconds, the app starts over): needed after changing `main()`, initial
+  state or `static` fields,
+- `q` quit (the app stays installed on the phone).
+
+Quit and re-run `tool/phone.sh run` only after touching native code (`android/`), adding a
+package with native code to `pubspec.yaml`, or changing a `--dart-define`.
+
+This is a debug build: fine for layout and logic, a bit less smooth than release.
+
+**From VS Code** (Flutter extension): pick the phone in the status bar, start with F5, and every
+save hot-reloads. Pass the server URL with `"args": ["--dart-define=SERVER_URL=http://<PC-IP>:3000"]`
+in `.vscode/launch.json`.
 
 The server URL is also editable in the app (login screen → *Serveur*) and is remembered.
 
@@ -131,6 +153,8 @@ dart run tool/bot_match.dart --server http://localhost:3000   # full match betwe
 the offline demo (copy it to `assets/demo/round_resolved.json`).
 
 ## Gotchas
+
+- Every `adb` command hangs (WSL mirrored mode, no adb server yet): run `tool/phone.sh server`.
 
 - `pkill -f "dist/src/main"` kills your own shell (the pattern matches its command line); find
   the backend with `ps -eo pid,args | awk '$2=="node" && $3=="dist/src/main.js"'`.

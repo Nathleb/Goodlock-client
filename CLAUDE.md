@@ -31,7 +31,7 @@ Flutter SDK: `~/development/flutter` (on `PATH` via `~/.zshrc`). Android SDK: `~
 lib/net/      REST + Socket.IO client, protocol models (fromJson)
 lib/screens/  Flutter screens (Material 3, forced landscape, touch targets >= 44 px)
 lib/game/     Flame components and scenes
-tool/         dev scripts (headless bot match)
+tool/         dev scripts (headless bot match, phone.sh: wireless-debugging loop)
 test/         unit/widget tests; test/fixtures/ holds real payloads recorded from the backend
 ```
 
