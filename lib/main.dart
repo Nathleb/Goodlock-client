@@ -6,7 +6,9 @@ import 'screens/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  // Forced landscape, full screen (the manifest also locks sensorLandscape, so there is no portrait flash).
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   final session = await AppSession.load();
   runApp(GoodlockApp(session: session));
 }
