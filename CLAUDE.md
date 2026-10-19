@@ -40,6 +40,8 @@ test/         unit/widget tests; test/fixtures/ holds real payloads recorded fro
 - Mobile first: judge feel on a device build, not on an emulator or desktop.
 - The client is display-only: never compute game outcomes locally; animate what the server sent.
 - Protocol models mirror backend DTOs exactly; parsing is unit-tested against recorded payloads.
+- Game sizes (deck 6, team 4, board 5 cells with one empty) live in `lib/net/rules.dart`, mirrored from the
+  backend; position a character by `position.slot`, never by its index in `team`.
 - Before combat (SELECTION, PLACEMENT) the server never sends the opponent's picks or team; don't build
   UI that assumes them.
 - TDD for anything non-visual. Conventional commits.
