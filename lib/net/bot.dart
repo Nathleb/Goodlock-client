@@ -3,6 +3,7 @@ import 'dart:math';
 import 'api.dart';
 import 'game_socket.dart';
 import 'models.dart';
+import 'rules.dart';
 
 /// A scripted player: registers, takes a seat and answers every confirm phase.
 /// Used by tool/bot_match.dart and by the in-app live demo (two bots, one watched).
@@ -87,6 +88,10 @@ class Bot {
     } catch (_) {}
   }
 }
+
+/// A random board layout for [teamIds]: every character once, the remaining cells empty (null).
+List<String?> placementSlots(List<String> teamIds, Random rng) =>
+    <String?>[...teamIds, ...List<String?>.filled(boardSize - teamIds.length, null)]..shuffle(rng);
 
 /// Puts two set-up bots in a room with their decks chosen; returns the room.
 Future<RoomView> seatBots(Bot owner, Bot guest) async {
