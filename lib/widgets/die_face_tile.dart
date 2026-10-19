@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../net/models.dart';
+import '../net/rules.dart';
 
 const effectColors = {
   'Damage': Color(0xFFFF6B6B),
@@ -58,7 +59,9 @@ class DieFaceTile extends StatelessWidget {
   }
 }
 
-/// 2×5 sketch of the cells an effect hits; relative targets are drawn from the middle slot (★).
+/// Sketch of the cells an effect hits, laid out like the board: two columns of [boardSize] cells,
+/// allies on the left, enemies on the right, slot 0 on top. Relative targets are drawn from the
+/// middle slot (outlined).
 class TargetGrid extends StatelessWidget {
   final List<TargetGroup> groups;
   final Color color;
@@ -89,9 +92,8 @@ class TargetGrid extends StatelessWidget {
       );
     }
 
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Row(mainAxisSize: MainAxisSize.min, children: [for (var s = 0; s < 5; s++) cell(true, s)]),
-      Row(mainAxisSize: MainAxisSize.min, children: [for (var s = 0; s < 5; s++) cell(false, s)]),
-    ]);
+    Widget column(bool enemy) =>
+        Column(mainAxisSize: MainAxisSize.min, children: [for (var s = 0; s < boardSize; s++) cell(enemy, s)]);
+    return Row(mainAxisSize: MainAxisSize.min, children: [column(false), const SizedBox(width: 6), column(true)]);
   }
 }
