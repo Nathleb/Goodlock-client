@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goodlock_app/net/models.dart';
+import 'package:goodlock_app/net/rules.dart';
 
 Map<String, dynamic> face(String d, {int priority = 0}) => {
       'description': d,
@@ -166,7 +167,12 @@ void main() {
     for (final j in raw) {
       final r = RoundResolved.fromJson(j as Json);
       expect(r.resolveLog, isNotEmpty);
-      expect(r.gameState.players.map((p) => p.team.length), [5, 5]);
+      expect(r.gameState.players.map((p) => p.team.length), [teamSize, teamSize]);
+      for (final p in r.gameState.players) {
+        // One cell per side stays empty: the team occupies teamSize distinct slots of the board.
+        expect(p.team.map((c) => c.position.slot).toSet(), hasLength(teamSize));
+        expect(p.team.every((c) => c.position.slot >= 0 && c.position.slot < boardSize), isTrue);
+      }
       expect(r.gameState.players.expand((p) => p.team).every((c) => c.catalogId.isNotEmpty), isTrue);
     }
   });
