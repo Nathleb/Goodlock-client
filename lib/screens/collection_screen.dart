@@ -32,7 +32,7 @@ class _CollectionScreenState extends State<CollectionScreen> {
         final chars = snap.data!;
         return GridView.builder(
           padding: const EdgeInsets.all(12),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.72, crossAxisSpacing: 10, mainAxisSpacing: 10),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 160, childAspectRatio: 0.72, crossAxisSpacing: 10, mainAxisSpacing: 10),
           itemCount: chars.length,
           itemBuilder: (context, i) => CharacterCard(character: chars[i], onTap: () => showCharacterSheet(context, chars[i])),
         );

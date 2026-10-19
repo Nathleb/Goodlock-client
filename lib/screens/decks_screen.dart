@@ -152,7 +152,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.72, crossAxisSpacing: 10, mainAxisSpacing: 10),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 160, childAspectRatio: 0.72, crossAxisSpacing: 10, mainAxisSpacing: 10),
               itemCount: widget.collection.length,
               itemBuilder: (context, i) {
                 final c = widget.collection[i];
