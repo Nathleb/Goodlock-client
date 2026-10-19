@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import '../app/session.dart';
 import '../net/api.dart';
 import '../net/models.dart';
+import '../net/rules.dart';
 import 'collection_screen.dart';
-
-const deckSize = 7;
 
 class DecksScreen extends StatefulWidget {
   final AppSession session;

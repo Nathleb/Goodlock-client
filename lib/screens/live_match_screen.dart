@@ -7,6 +7,7 @@ import '../app/session.dart';
 import '../game/resolve_game.dart';
 import '../net/bot.dart';
 import '../net/models.dart';
+import '../net/rules.dart';
 import '../widgets/resolve_view.dart';
 
 /// Live: two bots play on the real server; we watch bot A's seat and animate every round
@@ -68,7 +69,7 @@ class _LiveMatchScreenState extends State<LiveMatchScreen> {
   }
 
   String _describe(GameStateView gs) => switch (gs.phase) {
-        Phase.selection => 'Team preview : chaque bot garde 5 de ses 7',
+        Phase.selection => 'Team preview : chaque bot garde $teamSize de ses $deckSize',
         Phase.placement => 'Placement (équipe adverse cachée)',
         Phase.keep => 'Round ${gs.currentRound + 1} — dés (relances : ${gs.rollsLeft})',
         _ => gs.phase.name,
