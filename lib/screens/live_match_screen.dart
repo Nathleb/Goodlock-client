@@ -106,15 +106,16 @@ class _LiveMatchScreenState extends State<LiveMatchScreen> {
     final over = _over;
     final finished = over != null && !_draining && _queue.isEmpty;
     final me = _a?.me ?? 0;
-    return Scaffold(
-      appBar: AppBar(title: Text('Match en direct — rounds : $_rounds')),
-      body: Column(
+    return GameScreenFrame(
+      game: _game,
+      title: 'Match en direct — rounds : $_rounds',
+      center: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(padding: const EdgeInsets.all(8), child: Text(_status)),
-          Expanded(child: ResolveView(game: _game)),
+          Text(_status, textAlign: TextAlign.center),
           if (finished)
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.only(top: 12),
               child: Text(
                 over.isDraw ? 'Égalité' : (over.winner == me ? 'Victoire (${over.reason})' : 'Défaite (${over.reason})'),
                 style: Theme.of(context).textTheme.headlineSmall,
@@ -122,12 +123,7 @@ class _LiveMatchScreenState extends State<LiveMatchScreen> {
             ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(children: [PlaybackControls(game: _game, onChanged: () => setState(() {}))]),
-        ),
-      ),
+      controls: [PlaybackControls(game: _game, onChanged: () => setState(() {}))],
     );
   }
 }

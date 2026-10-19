@@ -53,27 +53,21 @@ class _ResolveDemoScreenState extends State<ResolveDemoScreen> {
   @override
   Widget build(BuildContext context) {
     final total = _rounds.length - 1;
-    return Scaffold(
-      appBar: AppBar(title: Text(total > 0 ? 'Démo — round $_round / $total' : 'Démo')),
-      body: _rounds.isEmpty ? const Center(child: CircularProgressIndicator()) : ResolveView(game: _game),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              PlaybackControls(game: _game, onChanged: () => setState(() {})),
-              const Spacer(),
-              IconButton.filledTonal(tooltip: 'Rejouer', icon: const Icon(Icons.replay), onPressed: _game.isPlaying ? null : _play),
-              const SizedBox(width: 8),
-              FilledButton.icon(
-                onPressed: _game.isPlaying ? null : _next,
-                icon: const Icon(Icons.skip_next),
-                label: const Text('Round suivant'),
-              ),
-            ],
-          ),
+    if (_rounds.isEmpty) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return GameScreenFrame(
+      game: _game,
+      title: total > 0 ? 'Démo — round $_round / $total' : 'Démo',
+      controls: [
+        PlaybackControls(game: _game, onChanged: () => setState(() {})),
+        const SizedBox(width: 8),
+        IconButton.filledTonal(tooltip: 'Rejouer', icon: const Icon(Icons.replay), onPressed: _game.isPlaying ? null : _play),
+        const SizedBox(width: 8),
+        FilledButton.icon(
+          onPressed: _game.isPlaying ? null : _next,
+          icon: const Icon(Icons.skip_next),
+          label: const Text('Round suivant'),
         ),
-      ),
+      ],
     );
   }
 }
