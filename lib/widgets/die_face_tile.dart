@@ -5,6 +5,7 @@ import '../net/rules.dart';
 
 const effectColors = {
   'Damage': Color(0xFFFF6B6B),
+  'FixedDamage': Color(0xFF9C1F5B), // sacrificed HP: a cost, not an attack
   'Heal': Color(0xFF7CE38B),
   'Shield': Color(0xFF7FB8FF),
   'Swap': Color(0xFFC08BFF),
