@@ -16,6 +16,7 @@ import 'playback.dart';
 
 const _effectColors = {
   'Damage': Color(0xFFFF5A5F),
+  'FixedDamage': Color(0xFF9C1F5B), // sacrificed HP: a cost, not an attack
   'Heal': Color(0xFF7CE38B),
   'Shield': Color(0xFF7FB8FF),
   'Swap': Color(0xFFC08BFF),
@@ -127,6 +128,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
     actor.priority = 10;
     await _fx(actor, ScaleEffect.to(Vector2.all(1.12), EffectController(duration: 0.12, curve: Curves.easeOut)));
 
+    // Only 'Damage' is hostile: FixedDamage is a cost paid, so no lunge.
     final hostile = step.effects.any((e) => e.effect == 'Damage' && !e.fizzled);
     // Lunge toward the opposing column.
     final towardFoe = actor.isMine ? 1.0 : -1.0;
