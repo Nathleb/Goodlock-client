@@ -97,6 +97,21 @@ void main() {
     expect(gs.players[1].team.single.id, 'b');
   });
 
+  test('GameStateView parses initiativePlayerIndex and defaults it to 0', () {
+    final base = {
+      'phase': 'ROLL_PHASE',
+      'currentRound': 0,
+      'rollsLeft': 2,
+      'playersReady': [false, false],
+      'players': [
+        {'playerIndex': 0, 'team': []},
+        {'playerIndex': 1, 'team': []},
+      ],
+    };
+    expect(GameStateView.fromJson({...base, 'initiativePlayerIndex': 1}).initiativePlayerIndex, 1);
+    expect(GameStateView.fromJson(base).initiativePlayerIndex, 0);
+  });
+
   test('unknown phases are kept as unknown rather than crashing', () {
     expect(Phase.parse('SOMETHING_NEW'), Phase.unknown);
   });

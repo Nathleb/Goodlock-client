@@ -170,6 +170,7 @@ class SelectionView {
 class GameStateView {
   final Phase phase;
   final int currentRound;
+  final int initiativePlayerIndex;
   final int rollsLeft;
   final List<bool> playersReady;
   final List<PlayerView> players;
@@ -179,6 +180,7 @@ class GameStateView {
   const GameStateView({
     required this.phase,
     required this.currentRound,
+    required this.initiativePlayerIndex,
     required this.rollsLeft,
     required this.playersReady,
     required this.players,
@@ -189,6 +191,7 @@ class GameStateView {
   factory GameStateView.fromJson(Json j) => GameStateView(
         phase: Phase.parse(j['phase'] as String),
         currentRound: j['currentRound'] as int,
+        initiativePlayerIndex: (j['initiativePlayerIndex'] as int?) ?? 0,
         rollsLeft: j['rollsLeft'] as int,
         playersReady: List<bool>.from(j['playersReady'] as List),
         players: _list(j['players'], PlayerView.fromJson),
