@@ -13,6 +13,26 @@ The backend is `../Goodlock-back` (NestJS + Socket.IO 4). It is the **source of 
 DTOs in `Goodlock-back/src/application/dtos/`, events in
 `Goodlock-back/src/infrastructure/adapters/websocket/session.gateway.ts`. Read them before changing a model.
 
+## Reference docs
+
+Game rules, the roadmap and the feature specs live in the backend repo, not here. Read them from
+`../Goodlock-back/docs/` before planning, they are not loaded automatically:
+
+- `GAME-DESIGN.md`: the rules and phases. Read before any change that displays or depends on a mechanic.
+- `ROADMAP.md`: the only backlog and the direction to v1.0 (read-only from here).
+- `features/active/<topic>/design.md`: the approved spec of a feature in progress, including its
+  client contract. `features/implemented/` describes current behavior.
+
+The client has its own `docs/features/active/<topic>/` (then `implemented/`), same topic and date as the
+backend feature it follows, laid out like the backend's:
+
+- `design.md`, only when the feature needs UI decisions to be settled (screens, interactions,
+  animation behavior). It links the backend `design.md` for rules and protocol instead of copying it.
+- `plan.md`, always: ordered steps, each with the test to write first.
+
+A feature that is purely client-side (UX, animation) has a client `design.md` and `plan.md` and no
+backend spec. Merge the backend PR first, since it owns the protocol.
+
 ## Commands
 
 ```bash
