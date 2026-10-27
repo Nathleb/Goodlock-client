@@ -10,12 +10,14 @@ const effectColors = {
   'Shield': Color(0xFF7FB8FF),
   'Swap': Color(0xFFC08BFF),
   'ApplyStat': Color(0xFF8A5CF6),
+  'ApplyState': Color(0xFF2EC4B6),
 };
 
 String _chipText(FaceEffect e) {
   if (e.effect == 'ApplyStat') {
     return '${e.stat} ${e.magnitude >= 0 ? '+' : ''}${e.magnitude} · ${e.duration} t.';
   }
+  if (e.effect == 'ApplyState') return '${e.state} · ${e.duration} t.';
   return '${e.effect} ${e.effect == 'Swap' ? '' : e.magnitude}';
 }
 

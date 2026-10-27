@@ -52,14 +52,16 @@ class FaceEffect {
   final int magnitude;
   final List<TargetGroup> targets;
   final String? stat; // ApplyStat only
-  final int? duration; // ApplyStat only, in rounds
-  const FaceEffect(this.effect, this.magnitude, this.targets, {this.stat, this.duration});
+  final String? state; // ApplyState only
+  final int? duration; // ApplyStat and ApplyState, in rounds
+  const FaceEffect(this.effect, this.magnitude, this.targets, {this.stat, this.state, this.duration});
 
   factory FaceEffect.fromJson(Json j) => FaceEffect(
         j['effect'] as String,
         j['magnitude'] as int,
         _list(j['targets'], TargetGroup.fromJson),
         stat: j['stat'] as String?,
+        state: j['state'] as String?,
         duration: j['duration'] as int?,
       );
 }
@@ -121,6 +123,7 @@ class CharacterView {
   final Cell position;
   final List<StatInstance> modifiers;
   final Map<String, int> stats; // net value per stat, already capped by the server
+  final Map<String, int> states; // signed duration counter per axis (SPEED, VITALITY, STUN, ROOT, DIVINE_SHIELD)
 
   const CharacterView({
     required this.id,
@@ -136,6 +139,7 @@ class CharacterView {
     required this.position,
     this.modifiers = const [],
     this.stats = const {},
+    this.states = const {},
   });
 
   bool get isDead => hp <= 0;
@@ -154,6 +158,7 @@ class CharacterView {
         position: position ?? this.position,
         modifiers: modifiers,
         stats: stats,
+        states: states,
       );
 
   factory CharacterView.fromJson(Json j) => CharacterView(
@@ -170,6 +175,7 @@ class CharacterView {
         position: Cell.fromJson(j['position'] as Json),
         modifiers: _list(j['modifiers'], StatInstance.fromJson),
         stats: ((j['stats'] as Map?) ?? const {}).map((k, v) => MapEntry(k as String, v as int)),
+        states: ((j['states'] as Map?) ?? const {}).map((k, v) => MapEntry(k as String, v as int)),
       );
 }
 
