@@ -224,4 +224,31 @@ void main() {
     expect(plain.stat, isNull);
     expect(plain.duration, isNull);
   });
+
+  test('FaceEffect parses state and keeps duration, null when absent', () {
+    final applyState = FaceEffect.fromJson({
+      'effect': 'ApplyState',
+      'magnitude': 0,
+      'state': 'STUN',
+      'duration': 1,
+      'targets': [],
+    });
+    expect(applyState.state, 'STUN');
+    expect(applyState.duration, 1);
+    final plain = FaceEffect.fromJson({'effect': 'Damage', 'magnitude': 3, 'targets': []});
+    expect(plain.state, isNull);
+  });
+
+  test('CharacterView parses states and defaults them to empty', () {
+    final withStates = CharacterView.fromJson({
+      ...character('a'),
+      'states': {'SPEED': 2, 'VITALITY': -1, 'STUN': 1, 'ROOT': 0, 'DIVINE_SHIELD': 0},
+    });
+    expect(withStates.states['SPEED'], 2);
+    expect(withStates.states['VITALITY'], -1);
+    expect(withStates.states['STUN'], 1);
+    expect(withStates.copyWith(hp: 1).states, withStates.states);
+
+    expect(CharacterView.fromJson(character('a')).states, isEmpty);
+  });
 }
