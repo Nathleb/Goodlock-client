@@ -9,7 +9,15 @@ const effectColors = {
   'Heal': Color(0xFF7CE38B),
   'Shield': Color(0xFF7FB8FF),
   'Swap': Color(0xFFC08BFF),
+  'ApplyStat': Color(0xFF8A5CF6),
 };
+
+String _chipText(FaceEffect e) {
+  if (e.effect == 'ApplyStat') {
+    return '${e.stat} ${e.magnitude >= 0 ? '+' : ''}${e.magnitude} · ${e.duration} t.';
+  }
+  return '${e.effect} ${e.effect == 'Swap' ? '' : e.magnitude}';
+}
 
 /// One die face: description, priority bracket, each effect with a mini targeting grid.
 class DieFaceTile extends StatelessWidget {
@@ -42,7 +50,7 @@ class DieFaceTile extends StatelessWidget {
                         children: [
                           Chip(
                             visualDensity: VisualDensity.compact,
-                            label: Text('${e.effect} ${e.effect == 'Swap' ? '' : e.magnitude}'),
+                            label: Text(_chipText(e)),
                             side: BorderSide(color: effectColors[e.effect] ?? Colors.white24),
                           ),
                           const SizedBox(width: 8),

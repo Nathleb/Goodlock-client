@@ -191,4 +191,37 @@ void main() {
       expect(r.gameState.players.expand((p) => p.team).every((c) => c.catalogId.isNotEmpty), isTrue);
     }
   });
+
+  test('CharacterView parses modifiers and stats and defaults them to empty', () {
+    final withStats = CharacterView.fromJson({
+      ...character('a'),
+      'modifiers': [
+        {'stat': 'POWER', 'value': -2, 'roundsLeft': 1}
+      ],
+      'stats': {'POWER': -2},
+    });
+    expect(withStats.modifiers.single.stat, 'POWER');
+    expect(withStats.modifiers.single.value, -2);
+    expect(withStats.modifiers.single.roundsLeft, 1);
+    expect(withStats.stats, {'POWER': -2});
+
+    final without = CharacterView.fromJson(character('a'));
+    expect(without.modifiers, isEmpty);
+    expect(without.stats, isEmpty);
+  });
+
+  test('FaceEffect parses stat and duration, null when absent', () {
+    final applyStat = FaceEffect.fromJson({
+      'effect': 'ApplyStat',
+      'magnitude': -2,
+      'stat': 'POWER',
+      'duration': 2,
+      'targets': [],
+    });
+    expect(applyStat.stat, 'POWER');
+    expect(applyStat.duration, 2);
+    final plain = FaceEffect.fromJson({'effect': 'Damage', 'magnitude': 3, 'targets': []});
+    expect(plain.stat, isNull);
+    expect(plain.duration, isNull);
+  });
 }

@@ -20,6 +20,7 @@ const _effectColors = {
   'Heal': Color(0xFF7CE38B),
   'Shield': Color(0xFF7FB8FF),
   'Swap': Color(0xFFC08BFF),
+  'ApplyStat': Color(0xFF8A5CF6), // buff/debuff: not hostile
 };
 
 /// Plays the server's resolve log on a landscape board, two facing columns of [boardSize] cells

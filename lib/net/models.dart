@@ -51,10 +51,28 @@ class FaceEffect {
   final String effect;
   final int magnitude;
   final List<TargetGroup> targets;
-  const FaceEffect(this.effect, this.magnitude, this.targets);
+  final String? stat; // ApplyStat only
+  final int? duration; // ApplyStat only, in rounds
+  const FaceEffect(this.effect, this.magnitude, this.targets, {this.stat, this.duration});
 
-  factory FaceEffect.fromJson(Json j) =>
-      FaceEffect(j['effect'] as String, j['magnitude'] as int, _list(j['targets'], TargetGroup.fromJson));
+  factory FaceEffect.fromJson(Json j) => FaceEffect(
+        j['effect'] as String,
+        j['magnitude'] as int,
+        _list(j['targets'], TargetGroup.fromJson),
+        stat: j['stat'] as String?,
+        duration: j['duration'] as int?,
+      );
+}
+
+/// An active buff/debuff instance on a character.
+class StatInstance {
+  final String stat;
+  final int value;
+  final int roundsLeft;
+  const StatInstance(this.stat, this.value, this.roundsLeft);
+
+  factory StatInstance.fromJson(Json j) =>
+      StatInstance(j['stat'] as String, j['value'] as int, j['roundsLeft'] as int);
 }
 
 class DieFace {
@@ -101,6 +119,8 @@ class CharacterView {
   final DieFace face;
   final bool isFaceLocked;
   final Cell position;
+  final List<StatInstance> modifiers;
+  final Map<String, int> stats; // net value per stat, already capped by the server
 
   const CharacterView({
     required this.id,
@@ -114,6 +134,8 @@ class CharacterView {
     required this.face,
     required this.isFaceLocked,
     required this.position,
+    this.modifiers = const [],
+    this.stats = const {},
   });
 
   bool get isDead => hp <= 0;
@@ -130,6 +152,8 @@ class CharacterView {
         face: face ?? this.face,
         isFaceLocked: isFaceLocked ?? this.isFaceLocked,
         position: position ?? this.position,
+        modifiers: modifiers,
+        stats: stats,
       );
 
   factory CharacterView.fromJson(Json j) => CharacterView(
@@ -144,6 +168,8 @@ class CharacterView {
         face: DieFace.fromJson(j['face'] as Json),
         isFaceLocked: j['isFaceLocked'] as bool,
         position: Cell.fromJson(j['position'] as Json),
+        modifiers: _list(j['modifiers'], StatInstance.fromJson),
+        stats: ((j['stats'] as Map?) ?? const {}).map((k, v) => MapEntry(k as String, v as int)),
       );
 }
 
