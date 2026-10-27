@@ -13,4 +13,12 @@ void main() {
     expect(effectColors['ApplyStat'], isNot(effectColors['FixedDamage']));
     expect(effectColors['ApplyStat'], isNot(effectColors['Shield']));
   });
+
+  test('ApplyState has its own colour, distinct from the other effects', () {
+    final c = effectColors['ApplyState'];
+    expect(c, isNotNull);
+    for (final k in ['Damage', 'FixedDamage', 'Shield', 'Swap', 'ApplyStat']) {
+      expect(c, isNot(effectColors[k]));
+    }
+  });
 }
