@@ -15,9 +15,19 @@ void main() {
     }
   });
 
-  test('the schema rejects a payload with an unknown field', () {
-    final bad = {'message': 'boom', 'extra': 1};
+  test('every recorded start board matches GameStateUpdatePayload', () {
+    final boards = jsonDecode(File('test/fixtures/round_start.json').readAsStringSync()) as List;
 
-    expect(schemaFor('ErrorPayload').validate(bad).isValid, isFalse);
+    expect(boards, isNotEmpty);
+    for (var i = 0; i < boards.length; i++) {
+      expectValid('GameStateUpdatePayload', boards[i], reason: 'board $i');
+    }
+  });
+
+  test('the schema accepts a valid ErrorPayload and rejects the same one with an unknown field', () {
+    final valid = {'code': 'INTERNAL', 'message': 'boom'};
+
+    expectValid('ErrorPayload', valid);
+    expect(schemaFor('ErrorPayload').validate({...valid, 'extra': 1}).isValid, isFalse);
   });
 }
