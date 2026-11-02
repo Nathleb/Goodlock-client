@@ -75,7 +75,7 @@ Future<void> main(List<String> args) async {
   }
 }
 
-/// Writes the first [maxRecorded] payloads; round_start.json[i] is the board round_resolved.json[i] started from.
+/// Writes the first [maxRecorded] payloads; round_start.json[i] is the KEEP_PHASE board round_resolved.json[i] started from.
 Future<void> _write(String path, List<Json> payloads) async {
   final file = File(path);
   await file.parent.create(recursive: true);
