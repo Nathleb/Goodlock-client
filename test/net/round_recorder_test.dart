@@ -48,6 +48,7 @@ void main() {
       ..onResolved({'round': 1})
       ..onResolved({'round': 2});
 
+    expect(recorder.starts, [keep(1)]);
     expect(recorder.resolved, [
       {'round': 1},
     ]);
