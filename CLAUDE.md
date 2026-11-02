@@ -40,6 +40,7 @@ flutter pub get
 flutter analyze
 flutter test
 dart run tool/bot_match.dart --server http://localhost:3000   # two bots play a full match (backend must run)
+tool/sync_protocol.sh                                       # copy the backend protocol schema into test/protocol/
 flutter build apk --debug                                   # build/app/outputs/flutter-apk/app-debug.apk
 ```
 
@@ -60,8 +61,8 @@ test/         unit/widget tests; test/fixtures/ holds real payloads recorded fro
 - Mobile first: judge feel on a device build, not on an emulator or desktop.
 - Forced landscape, full screen (immersive). The combat board is two facing columns: the viewer on the
   left, the opponent on the right, slot 0 on top, the centre band free for captions and controls.
-- The client is display-only: never compute game outcomes locally; animate what the server sent.
-- Protocol models mirror backend DTOs exactly; parsing is unit-tested against recorded payloads.
+- The server is the source of truth for every outcome and every die roll: the client animates what it sent. The only local computation is the preview of the round from the locked dice (the rules are deterministic), which is recomputed on every lock or reroll and never replaces what the server resolves.
+- Protocol models mirror backend DTOs exactly; parsing is unit-tested against recorded payloads. The backend's `protocol/protocol.schema.json` is copied to `test/protocol/` by `tool/sync_protocol.sh` (run it after a protocol change, then re-record the fixtures with `bot_match --record`); the fixtures and the hand-written payloads of the tests are validated against it.
 - Game sizes (deck 6, team 4, board 5 cells with one empty) live in `lib/net/rules.dart`, mirrored from the
   backend; position a character by `position.slot`, never by its index in `team`.
 - Before combat (SELECTION, PLACEMENT) the server never sends the opponent's picks or team; don't build
