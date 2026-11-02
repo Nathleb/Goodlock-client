@@ -89,4 +89,21 @@ void main() {
       }
     }
   });
+
+  test('replaying a recorded round from its recorded start board lands on the recorded end state', () {
+    List<Json> load(String name) =>
+        (jsonDecode(File('test/fixtures/upkeep/$name.json').readAsStringSync()) as List).cast<Json>();
+    final starts = load('round_start').map(GameStateView.fromJson).toList();
+    final rounds = load('round_resolved').map(RoundResolved.fromJson).toList();
+
+    expect(starts.length, rounds.length);
+    for (var i = 0; i < rounds.length; i++) {
+      expect(starts[i].phase, Phase.keep, reason: 'round ${i + 1} start');
+      expect(starts[i].currentRound, rounds[i].gameState.currentRound, reason: 'round ${i + 1} pairing');
+      final end = replayHp(starts[i].players.expand((p) => p.team).toList(), rounds[i].resolveLog);
+      for (final c in rounds[i].gameState.players.expand((p) => p.team)) {
+        expect(end[c.id], (c.hp, c.shield), reason: '${c.name} after round ${i + 1}');
+      }
+    }
+  });
 }
