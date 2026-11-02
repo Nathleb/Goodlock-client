@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copy the backend's protocol schema into the client tests (see CLAUDE.md, "Reference docs").
+# Copy the backend's protocol schema into the client tests (see CLAUDE.md, "Rules").
 #
 #   tool/sync_protocol.sh
 #

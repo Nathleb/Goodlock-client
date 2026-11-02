@@ -53,7 +53,8 @@ lib/net/      REST + Socket.IO client, protocol models (fromJson)
 lib/screens/  Flutter screens (Material 3, forced landscape, touch targets >= 44 px)
 lib/game/     Flame components and scenes
 tool/         dev scripts (headless bot match, phone.sh: wireless-debugging loop)
-test/         unit/widget tests; test/fixtures/ holds real payloads recorded from the backend
+test/         unit/widget tests; test/fixtures/ holds real payloads recorded from the backend;
+              test/protocol/ holds the synced backend schema and its validation helpers
 ```
 
 ## Rules
