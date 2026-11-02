@@ -1,6 +1,6 @@
 # Protocol schema (client) — plan
 
-**Status:** in progress (started 2026-10-26). Backend spec: `../Goodlock-back/docs/features/active/2026-10-26-protocol-schema/design.md`.
+**Status:** implemented 2026-11-03. Backend spec: `../Goodlock-back/docs/features/active/2026-10-26-protocol-schema/design.md`.
 
 The client keeps a synced copy of the backend's `protocol/protocol.schema.json` and validates its fixtures and hand-written payloads against it. No UI change, so no client `design.md`.
 
