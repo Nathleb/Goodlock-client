@@ -49,3 +49,6 @@ app.*.map.json
 
 # Flutter golden/test failure artifacts
 test/game/failures/
+
+# Claude Code: personal settings stay local
+.claude/settings.local.json

@@ -15,13 +15,16 @@ DTOs in `Goodlock-back/src/application/dtos/`, events in
 
 ## Reference docs
 
-Game rules, the roadmap and the feature specs live in the backend repo, not here. Read them from
-`../Goodlock-back/docs/` before planning, they are not loaded automatically:
+Read these before planning, they are not loaded automatically:
 
-- `GAME-DESIGN.md`: the rules and phases. Read before any change that displays or depends on a mechanic.
-- `ROADMAP.md`: the only backlog and the direction to v1.0 (read-only from here).
-- `features/active/<topic>/design.md`: the approved spec of a feature in progress, including its
-  client contract. `features/implemented/` describes current behavior.
+- `../Goodlock-specs/GAME-DESIGN.md`: the rules reference, in the language of the game, one ID per
+  rule. Read before any change that displays or depends on a mechanic. It lives in the specs space,
+  isolated from the code: read it, never write there (permission denied). When a change needs a new
+  or different rule, stop and tell the user.
+- `../Goodlock-back/docs/GLOSSARY.md`: the game terms of the rules mapped to the code names.
+- `../Goodlock-back/docs/ROADMAP.md`: the only backlog and the direction to v1.0 (read-only from here).
+- `../Goodlock-back/docs/features/active/<topic>/design.md`: the approved spec of a feature in
+  progress, including its client contract.
 
 The client has its own `docs/features/active/<topic>/` (then `implemented/`), same topic and date as the
 backend feature it follows, laid out like the backend's:
