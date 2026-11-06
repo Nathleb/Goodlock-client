@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:goodlock_app/net/models.dart';
 import 'package:goodlock_app/net/rules.dart';
 
+import '../protocol/schema.dart';
+
 Map<String, dynamic> face(String d, {int priority = 0}) => {
       'description': d,
       'priority': priority,
@@ -34,6 +36,25 @@ Map<String, dynamic> character(String id, {int playerIndex = 0, int slot = 0, in
     };
 
 void main() {
+  group('hand-written payloads match the backend schema', () {
+    test('face() is a DieFaceDTO', () {
+      expectValid('DieFaceDTO', face('f0', priority: 1));
+    });
+
+    test('a character as the server sends it is a CharacterDTO', () {
+      expectValid('CharacterDTO', {
+        ...character('c1', playerIndex: 1, slot: 3, hp: 4),
+        'modifiers': <Object>[],
+        'stats': {'POWER': 0, 'ARMOR': 0},
+        'states': {'SPEED': 0, 'VITALITY': 0, 'STUN': 0, 'ROOT': 0, 'DIVINE_SHIELD': 0},
+      });
+    });
+
+    test('character() alone is not a CharacterDTO: the tests that omit modifiers, stats and states are about client defaults', () {
+      expect(schemaFor('CharacterDTO').validate(character('c1')).isValid, isFalse);
+    });
+  });
+
   test('CharacterView parses identity, stats, die and position', () {
     final c = CharacterView.fromJson(character('c1', playerIndex: 1, slot: 3, hp: 4));
     expect(c.id, 'c1');
