@@ -207,6 +207,32 @@ class SelectionView {
       );
 }
 
+/// A player's time as the server settled it when it sent the state (CLOCK-1, AWAY-2). The client counts
+/// it down from the moment it receives it (see `MatchClocks`).
+class PlayerClock {
+  final int remainingMs;
+  final int reconnectionMs;
+
+  /// Whether the clock counts down now. For the opponent it never tells whether they confirmed (GAME-9).
+  final bool running;
+  final bool connected;
+  const PlayerClock({required this.remainingMs, required this.reconnectionMs, required this.running, required this.connected});
+
+  PlayerClock copyWith({int? remainingMs, int? reconnectionMs, bool? running, bool? connected}) => PlayerClock(
+        remainingMs: remainingMs ?? this.remainingMs,
+        reconnectionMs: reconnectionMs ?? this.reconnectionMs,
+        running: running ?? this.running,
+        connected: connected ?? this.connected,
+      );
+
+  factory PlayerClock.fromJson(Json j) => PlayerClock(
+        remainingMs: (j['remainingMs'] as num).toInt(),
+        reconnectionMs: (j['reconnectionMs'] as num).toInt(),
+        running: j['running'] as bool,
+        connected: j['connected'] as bool,
+      );
+}
+
 class GameStateView {
   final Phase phase;
   final int currentRound;
@@ -216,9 +242,11 @@ class GameStateView {
   /// Whether I have confirmed in the current phase. The server never says whether the opponent has
   /// (GAME-9); a state sent to both players carries no confirmation, which reads as false.
   final bool myReady;
+
+  /// Both clocks, indexed by player, public in every phase (GAME-7).
+  final List<PlayerClock> clocks;
   final List<PlayerView> players;
   final SelectionView? selection;
-  final int? afkClaimInMs;
 
   const GameStateView({
     required this.phase,
@@ -226,9 +254,9 @@ class GameStateView {
     required this.initiativePlayerIndex,
     required this.rollsLeft,
     this.myReady = false,
+    this.clocks = const [],
     required this.players,
     this.selection,
-    this.afkClaimInMs,
   });
 
   factory GameStateView.fromJson(Json j) => GameStateView(
@@ -237,9 +265,9 @@ class GameStateView {
         initiativePlayerIndex: (j['initiativePlayerIndex'] as int?) ?? 0,
         rollsLeft: j['rollsLeft'] as int,
         myReady: j['myReady'] as bool? ?? false,
+        clocks: _list(j['clocks'], PlayerClock.fromJson),
         players: _list(j['players'], PlayerView.fromJson),
         selection: j['selection'] == null ? null : SelectionView.fromJson(j['selection'] as Json),
-        afkClaimInMs: j['afkClaimInMs'] as int?,
       );
 }
 
@@ -311,12 +339,37 @@ class RoundResolved {
       RoundResolved(GameStateView.fromJson(j['gameState'] as Json), _list(j['resolveLog'], ResolveStep.fromJson));
 }
 
+/// Why a match ended (END-3).
+enum EndReason {
+  elimination('elimination'), // the loser has 2 dead characters (END-2)
+  clock('clock'), // the loser's clock reached 0 (CLOCK-3)
+  reconnection('reconnection'), // the loser's reconnection time ran out (AWAY-3)
+  concede('concede'), // the loser conceded or left the match (AWAY-1)
+  unknown('');
+
+  final String wire;
+  const EndReason(this.wire);
+
+  static EndReason parse(String raw) => values.firstWhere((r) => r.wire == raw, orElse: () => EndReason.unknown);
+}
+
 class GameOver {
   final int winner; // player index; there is no draw (END-1)
-  final String reason;
+  final EndReason reason;
   const GameOver(this.winner, this.reason);
 
-  factory GameOver.fromJson(Json j) => GameOver(j['winner'] as int, j['reason'] as String);
+  factory GameOver.fromJson(Json j) => GameOver(j['winner'] as int, EndReason.parse(j['reason'] as String));
+}
+
+/// A player disconnected or came back (AWAY-2), with the reconnection time they have left.
+class PresenceChanged {
+  final int playerIndex;
+  final bool connected;
+  final int reconnectionMs;
+  const PresenceChanged(this.playerIndex, this.connected, this.reconnectionMs);
+
+  factory PresenceChanged.fromJson(Json j) =>
+      PresenceChanged(j['playerIndex'] as int, j['connected'] as bool, (j['reconnectionMs'] as num).toInt());
 }
 
 class Deck {

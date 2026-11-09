@@ -52,7 +52,7 @@ Future<void> main(List<String> args) async {
       Future<GameOver>.delayed(const Duration(minutes: 2), () => throw TimeoutException('no gameOver')),
       a.socket.resolved.where((_) => rounds >= maxRounds).first.then((_) => throw StateError('too many rounds')),
     ]);
-    stdout.writeln('game over: winner=${result.winner} reason=${result.reason} after $rounds rounds');
+    stdout.writeln('game over: winner=${result.winner} reason=${result.reason.name} after $rounds rounds');
 
     final failures = [...a.failures, ...b.failures];
     if (!a.combatStarted || !b.combatStarted) failures.add('combat never started');

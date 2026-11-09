@@ -50,6 +50,7 @@ class Bot {
     if (gs.players.expand((p) => p.team).any((c) => c.isDead)) {
       failures.add('$name saw a dead character still on the board (${gs.phase})');
     }
+    if (gs.clocks.length != 2) failures.add('$name: a game state without both clocks (${gs.phase})');
     final ready = gs.myReady;
 
     switch (gs.phase) {

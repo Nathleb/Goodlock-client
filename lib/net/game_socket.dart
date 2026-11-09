@@ -12,13 +12,15 @@ class GameSocket {
   final _states = StreamController<GameStateView>.broadcast();
   final _resolved = StreamController<RoundResolved>.broadcast();
   final _gameOver = StreamController<GameOver>.broadcast();
+  final _presence = StreamController<PresenceChanged>.broadcast();
   final _errors = StreamController<String>.broadcast();
   final _sessionId = Completer<String>();
 
   Stream<RoomView> get rooms => _rooms.stream; // roomCreated + roomUpdated
   Stream<GameStateView> get states => _states.stream; // gameStateUpdated
   Stream<RoundResolved> get resolved => _resolved.stream; // roundResolved
-  Stream<GameOver> get gameOver => _gameOver.stream;
+  Stream<GameOver> get gameOver => _gameOver.stream; // the room is closed with it (ROOM-6)
+  Stream<PresenceChanged> get presence => _presence.stream; // presenceChanged
   Stream<String> get errors => _errors.stream;
 
   /// Sent by the server on connect; locate it in [RoomView.players] to know your player index.
@@ -41,6 +43,7 @@ class GameSocket {
     _socket.on('gameStateUpdated', (data) => _states.add(GameStateView.fromJson(_json(data))));
     _socket.on('roundResolved', (data) => _resolved.add(RoundResolved.fromJson(_json(data))));
     _socket.on('gameOver', (data) => _gameOver.add(GameOver.fromJson(_json(data))));
+    _socket.on('presenceChanged', (data) => _presence.add(PresenceChanged.fromJson(_json(data))));
     _socket.on('error', (data) => _errors.add(data is Map ? '${data['message']}' : '$data'));
     _socket.on('sessionStarted', (data) {
       if (!_sessionId.isCompleted) _sessionId.complete(_json(data)['sessionId'] as String);
@@ -61,7 +64,7 @@ class GameSocket {
 
   void dispose() {
     _socket.dispose();
-    for (final c in [_rooms, _states, _resolved, _gameOver, _errors]) {
+    for (final c in [_rooms, _states, _resolved, _gameOver, _presence, _errors]) {
       c.close();
     }
   }
@@ -83,7 +86,8 @@ class GameSocket {
   void confirmKeep(List<String> lockedCharacterIds) =>
       _socket.emit('confirmKeep', {'lockedCharacterIds': lockedCharacterIds});
   void cancelKeep() => _socket.emit('cancelKeep');
-  void claimVictory() => _socket.emit('claimVictory');
+  /// AWAY-1: the player concedes and loses at once.
+  void concede() => _socket.emit('concede');
 
   static Json _json(dynamic data) => Map<String, dynamic>.from(data as Map);
 }

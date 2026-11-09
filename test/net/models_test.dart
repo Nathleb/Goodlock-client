@@ -91,17 +91,15 @@ void main() {
         'decks': [List.filled(6, catalogChar), List.filled(6, catalogChar)],
         'myPicks': ['eve', 'eve', 'eve', 'eve'],
       },
-      'afkClaimInMs': 120000,
     });
     expect(gs.phase, Phase.selection);
     expect(gs.myReady, isTrue);
     expect(gs.selection!.decks[1], hasLength(6));
     expect(gs.selection!.decks[0].first.name, 'Eve');
     expect(gs.selection!.myPicks, hasLength(4));
-    expect(gs.afkClaimInMs, 120000);
   });
 
-  test('GameStateView parses KEEP with teams and no selection or timer', () {
+  test('GameStateView parses KEEP with teams and no selection', () {
     final gs = GameStateView.fromJson({
       'phase': 'KEEP_PHASE',
       'currentRound': 2,
@@ -114,7 +112,6 @@ void main() {
     expect(gs.phase, Phase.keep);
     expect(gs.myReady, isFalse, reason: 'a state sent to both players carries no confirmation (GAME-9)');
     expect(gs.selection, isNull);
-    expect(gs.afkClaimInMs, isNull);
     expect(gs.players[1].team.single.id, 'b');
   });
 
@@ -196,6 +193,94 @@ void main() {
     expectValid('GameOverDTO', over);
     expect(GameOver.fromJson(over).winner, 1);
     expect(schemaFor('GameOverDTO').validate({...over, 'winner': 'draw'}).isValid, isFalse);
+  });
+
+  test('END-3: GameOver parses why the match ended: 2 dead characters, clock, reconnection time or concession', () {
+    const reasons = {
+      'elimination': EndReason.elimination,
+      'clock': EndReason.clock,
+      'reconnection': EndReason.reconnection,
+      'concede': EndReason.concede,
+    };
+    reasons.forEach((wire, reason) {
+      final over = {'winner': 0, 'reason': wire};
+      expectValid('GameOverDTO', over);
+      expect(GameOver.fromJson(over).reason, reason);
+    });
+  });
+
+  test('the old forfeit and afk reasons are gone from the protocol, and an unknown reason does not crash', () {
+    expect(schemaFor('GameOverDTO').validate({'winner': 0, 'reason': 'forfeit'}).isValid, isFalse);
+    expect(schemaFor('GameOverDTO').validate({'winner': 0, 'reason': 'afk'}).isValid, isFalse);
+    expect(GameOver.fromJson({'winner': 0, 'reason': 'SOMETHING_NEW'}).reason, EndReason.unknown);
+  });
+
+  test('GameStateView parses both clocks, indexed by player (GAME-7)', () {
+    final clocks = [
+      {'remainingMs': 512000, 'reconnectionMs': 180000, 'running': true, 'connected': true},
+      {'remainingMs': 498500, 'reconnectionMs': 92000, 'running': false, 'connected': false},
+    ];
+    for (final c in clocks) {
+      expectValid('PlayerClockDTO', c);
+    }
+
+    final gs = GameStateView.fromJson({
+      'phase': 'KEEP_PHASE',
+      'currentRound': 1,
+      'rollsLeft': 1,
+      'clocks': clocks,
+      'players': [
+        {'playerIndex': 0, 'team': []},
+        {'playerIndex': 1, 'team': []},
+      ],
+    });
+
+    expect(gs.clocks, hasLength(2));
+    expect(gs.clocks[0].remainingMs, 512000);
+    expect(gs.clocks[0].reconnectionMs, 180000);
+    expect(gs.clocks[0].running, isTrue);
+    expect(gs.clocks[0].connected, isTrue);
+    expect(gs.clocks[1].remainingMs, 498500);
+    expect(gs.clocks[1].reconnectionMs, 92000);
+    expect(gs.clocks[1].running, isFalse);
+    expect(gs.clocks[1].connected, isFalse);
+  });
+
+  test('a game state without clocks is no GameStateDTO, and parses to no clocks', () {
+    final noClocks = {
+      'phase': 'KEEP_PHASE',
+      'currentRound': 0,
+      'initiativePlayerIndex': 0,
+      'rollsLeft': 2,
+      'players': [
+        {'playerIndex': 0, 'team': [], 'fallen': []},
+        {'playerIndex': 1, 'team': [], 'fallen': []},
+      ],
+    };
+
+    expect(schemaFor('GameStateDTO').validate(noClocks).isValid, isFalse);
+    expect(GameStateView.fromJson(noClocks).clocks, isEmpty);
+  });
+
+  test('PresenceChanged parses who is connected and their reconnection time left (AWAY-2)', () {
+    final away = {'playerIndex': 1, 'connected': false, 'reconnectionMs': 175400};
+
+    expectValid('PresenceChangedDTO', away);
+    final p = PresenceChanged.fromJson(away);
+    expect(p.playerIndex, 1);
+    expect(p.connected, isFalse);
+    expect(p.reconnectionMs, 175400);
+    expect(schemaFor('PresenceChangedDTO').validate({...away, 'claimInMs': null}).isValid, isFalse);
+  });
+
+  test('every recorded start board carries both clocks', () {
+    final raw = jsonDecode(File('test/fixtures/round_start.json').readAsStringSync()) as List;
+    expect(raw, isNotEmpty);
+    for (final j in raw) {
+      final gs = GameStateView.fromJson(j as Json);
+      expect(gs.clocks, hasLength(2));
+      expect(gs.clocks.every((c) => c.running && c.connected), isTrue, reason: 'a KEEP board sent to both');
+    }
   });
 
   test('PlayerView parses the fallen, off the board, apart from the team on the board', () {
