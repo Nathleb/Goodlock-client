@@ -120,22 +120,15 @@ class CharacterToken extends PositionComponent {
             : const Color(0xFFE85D5D);
     _hpText.text = '${c.hp.clamp(0, 999)}/${c.maxHp}';
     _shieldText.text = c.shield > 0 ? '🛡${c.shield}' : '';
-    if (c.isDead && !animate) showKo(instant: true);
   }
 
-  void showKo({bool instant = false}) {
+  /// The death mark, just before the character leaves the board (DEAD-1).
+  void showKo() {
     if (_koShown) return;
     _koShown = true;
-    final greyed = const Color(0xFF5A5A66);
-    if (instant) {
-      body.paint.color = greyed;
-      scale = Vector2.all(0.85);
-      angle = 0.1;
-    } else {
-      body.add(ColorEffect(greyed, EffectController(duration: 0.4), opacityTo: 0.85));
-      add(ScaleEffect.to(Vector2.all(0.85), EffectController(duration: 0.4, curve: _easeOut)));
-      add(RotateEffect.to(0.1, EffectController(duration: 0.4, curve: _easeOut)));
-    }
+    body.add(ColorEffect(const Color(0xFF5A5A66), EffectController(duration: 0.4), opacityTo: 0.85));
+    add(ScaleEffect.to(Vector2.all(0.85), EffectController(duration: 0.4, curve: _easeOut)));
+    add(RotateEffect.to(0.1, EffectController(duration: 0.4, curve: _easeOut)));
     add(TextComponent(
       text: 'KO',
       textRenderer: textPaint(size.x * 0.3, color: const Color(0xFFFFE066), weight: FontWeight.w900),

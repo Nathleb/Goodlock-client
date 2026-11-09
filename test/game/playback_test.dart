@@ -95,6 +95,29 @@ void main() {
     ]);
   });
 
+  test(
+    'DEAD-1: a change for a character who died at that step (hp 0, absent from the end-of-round team) '
+    'gives its death at that step only, and its later skipped action has no beats',
+    () {
+      final killer = ch('a', slot: 1);
+      final victim = ch('b', pi: 1, slot: 1, hp: 3);
+      final plan = planRound(
+        [killer, victim],
+        [
+          step('a', [ch('b', pi: 1, slot: 1, hp: 0)]),
+          step('b', const [], skipped: true),
+        ],
+      );
+      expect(plan[0].beats.map((x) => (x.kind, x.characterId)), [
+        (BeatKind.damage, 'b'),
+        (BeatKind.death, 'b'),
+      ]);
+      expect(plan[0].after['b']!.isDead, isTrue);
+      expect(plan[1].skipped, isTrue);
+      expect(plan[1].beats, isEmpty);
+    },
+  );
+
   test('skipped steps are kept, flagged, with no beats', () {
     final plan = planRound([a], [step('a', const [], skipped: true)]);
     expect(plan.single.skipped, isTrue);
