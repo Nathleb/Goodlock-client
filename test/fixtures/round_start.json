@@ -718,7 +718,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       },
       {
         "playerIndex": 1,
@@ -1453,7 +1454,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       }
     ],
     "afkClaimInMs": 120000
@@ -2178,7 +2180,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       },
       {
         "playerIndex": 1,
@@ -2871,7 +2874,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       }
     ],
     "afkClaimInMs": 120000
@@ -3595,7 +3599,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       },
       {
         "playerIndex": 1,
@@ -4342,7 +4347,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       }
     ],
     "afkClaimInMs": 120000
@@ -5080,7 +5086,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       },
       {
         "playerIndex": 1,
@@ -5805,7 +5812,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       }
     ],
     "afkClaimInMs": 120000
@@ -6522,7 +6530,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       },
       {
         "playerIndex": 1,
@@ -7237,7 +7246,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       }
     ],
     "afkClaimInMs": 120000
@@ -7964,7 +7974,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       },
       {
         "playerIndex": 1,
@@ -8693,7 +8704,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       }
     ],
     "afkClaimInMs": 120000
@@ -9433,7 +9445,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       },
       {
         "playerIndex": 1,
@@ -10138,7 +10151,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       }
     ],
     "afkClaimInMs": 120000
@@ -10889,7 +10903,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       },
       {
         "playerIndex": 1,
@@ -11580,7 +11595,8 @@
               "DIVINE_SHIELD": 0
             }
           }
-        ]
+        ],
+        "fallen": []
       }
     ],
     "afkClaimInMs": 120000
