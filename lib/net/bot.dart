@@ -47,7 +47,7 @@ class Bot {
     if (!combatStarted && opponent.team.isNotEmpty) {
       failures.add('$name saw the opponent team before combat (${gs.phase})');
     }
-    final ready = gs.playersReady[me];
+    final ready = gs.myReady;
 
     switch (gs.phase) {
       case Phase.selection:

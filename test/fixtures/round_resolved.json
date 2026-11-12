@@ -5,10 +5,6 @@
       "currentRound": 0,
       "initiativePlayerIndex": 0,
       "rollsLeft": 0,
-      "playersReady": [
-        false,
-        false
-      ],
       "players": [
         {
           "playerIndex": 0,
@@ -3636,10 +3632,6 @@
       "currentRound": 1,
       "initiativePlayerIndex": 1,
       "rollsLeft": 0,
-      "playersReady": [
-        false,
-        false
-      ],
       "players": [
         {
           "playerIndex": 0,
@@ -6622,10 +6614,6 @@
       "currentRound": 2,
       "initiativePlayerIndex": 0,
       "rollsLeft": 0,
-      "playersReady": [
-        false,
-        false
-      ],
       "players": [
         {
           "playerIndex": 0,
@@ -11024,10 +11012,6 @@
       "currentRound": 3,
       "initiativePlayerIndex": 1,
       "rollsLeft": 0,
-      "playersReady": [
-        false,
-        false
-      ],
       "players": [
         {
           "playerIndex": 0,
@@ -14406,10 +14390,6 @@
       "currentRound": 4,
       "initiativePlayerIndex": 0,
       "rollsLeft": 0,
-      "playersReady": [
-        false,
-        false
-      ],
       "players": [
         {
           "playerIndex": 0,
@@ -17407,10 +17387,6 @@
       "currentRound": 5,
       "initiativePlayerIndex": 1,
       "rollsLeft": 0,
-      "playersReady": [
-        false,
-        false
-      ],
       "players": [
         {
           "playerIndex": 0,
@@ -20374,10 +20350,6 @@
       "currentRound": 6,
       "initiativePlayerIndex": 0,
       "rollsLeft": 0,
-      "playersReady": [
-        false,
-        false
-      ],
       "players": [
         {
           "playerIndex": 0,
@@ -23846,10 +23818,6 @@
       "currentRound": 7,
       "initiativePlayerIndex": 1,
       "rollsLeft": 0,
-      "playersReady": [
-        false,
-        false
-      ],
       "players": [
         {
           "playerIndex": 0,

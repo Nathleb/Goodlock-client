@@ -82,7 +82,7 @@ void main() {
       'phase': 'SELECTION_PHASE',
       'currentRound': 0,
       'rollsLeft': 2,
-      'playersReady': [true, false],
+      'myReady': true,
       'players': [
         {'playerIndex': 0, 'team': []},
         {'playerIndex': 1, 'team': []},
@@ -94,7 +94,7 @@ void main() {
       'afkClaimInMs': 120000,
     });
     expect(gs.phase, Phase.selection);
-    expect(gs.playersReady, [true, false]);
+    expect(gs.myReady, isTrue);
     expect(gs.selection!.decks[1], hasLength(6));
     expect(gs.selection!.decks[0].first.name, 'Eve');
     expect(gs.selection!.myPicks, hasLength(4));
@@ -106,13 +106,13 @@ void main() {
       'phase': 'KEEP_PHASE',
       'currentRound': 2,
       'rollsLeft': 1,
-      'playersReady': [false, false],
       'players': [
         {'playerIndex': 0, 'team': [character('a')]},
         {'playerIndex': 1, 'team': [character('b', playerIndex: 1)]},
       ],
     });
     expect(gs.phase, Phase.keep);
+    expect(gs.myReady, isFalse, reason: 'a state sent to both players carries no confirmation (GAME-9)');
     expect(gs.selection, isNull);
     expect(gs.afkClaimInMs, isNull);
     expect(gs.players[1].team.single.id, 'b');
@@ -123,7 +123,6 @@ void main() {
       'phase': 'ROLL_PHASE',
       'currentRound': 0,
       'rollsLeft': 2,
-      'playersReady': [false, false],
       'players': [
         {'playerIndex': 0, 'team': []},
         {'playerIndex': 1, 'team': []},
@@ -158,7 +157,6 @@ void main() {
         'phase': 'RESULT_PHASE',
         'currentRound': 1,
         'rollsLeft': 0,
-        'playersReady': [false, false],
         'players': [
           {'playerIndex': 0, 'team': [character('a')]},
           {'playerIndex': 1, 'team': [character('b', playerIndex: 1, hp: 7)]},
