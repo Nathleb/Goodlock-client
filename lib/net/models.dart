@@ -119,6 +119,9 @@ class CharacterView {
   final int baseSpeed;
   final List<DieFace> baseDie;
   final DieFace face;
+
+  /// Whether the die was kept at the last Roll (ROLL-2). In a state sent to me alone, my own dice show
+  /// instead what I last confirmed in the current Keep; the opponent's never show their Keep in progress.
   final bool isFaceLocked;
   final Cell position;
   final List<StatInstance> modifiers;
@@ -209,7 +212,10 @@ class GameStateView {
   final int currentRound;
   final int initiativePlayerIndex;
   final int rollsLeft;
-  final List<bool> playersReady;
+
+  /// Whether I have confirmed in the current phase. The server never says whether the opponent has
+  /// (GAME-9); a state sent to both players carries no confirmation, which reads as false.
+  final bool myReady;
   final List<PlayerView> players;
   final SelectionView? selection;
   final int? afkClaimInMs;
@@ -219,7 +225,7 @@ class GameStateView {
     required this.currentRound,
     required this.initiativePlayerIndex,
     required this.rollsLeft,
-    required this.playersReady,
+    this.myReady = false,
     required this.players,
     this.selection,
     this.afkClaimInMs,
@@ -230,7 +236,7 @@ class GameStateView {
         currentRound: j['currentRound'] as int,
         initiativePlayerIndex: (j['initiativePlayerIndex'] as int?) ?? 0,
         rollsLeft: j['rollsLeft'] as int,
-        playersReady: List<bool>.from(j['playersReady'] as List),
+        myReady: j['myReady'] as bool? ?? false,
         players: _list(j['players'], PlayerView.fromJson),
         selection: j['selection'] == null ? null : SelectionView.fromJson(j['selection'] as Json),
         afkClaimInMs: j['afkClaimInMs'] as int?,

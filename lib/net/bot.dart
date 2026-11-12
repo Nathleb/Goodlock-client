@@ -50,7 +50,7 @@ class Bot {
     if (gs.players.expand((p) => p.team).any((c) => c.isDead)) {
       failures.add('$name saw a dead character still on the board (${gs.phase})');
     }
-    final ready = gs.playersReady[me];
+    final ready = gs.myReady;
 
     switch (gs.phase) {
       case Phase.selection:
