@@ -699,7 +699,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -1422,7 +1423,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -4340,7 +4342,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -5027,7 +5030,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -7326,7 +7330,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -8055,7 +8060,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -11717,7 +11723,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -12428,7 +12435,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -15090,7 +15098,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -15789,7 +15798,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -18107,7 +18117,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -18810,7 +18821,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -21075,7 +21087,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -21779,7 +21792,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -24523,7 +24537,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -25227,7 +25242,8 @@
                 "DIVINE_SHIELD": 0
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },

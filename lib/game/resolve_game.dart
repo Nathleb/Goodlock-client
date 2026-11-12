@@ -33,12 +33,15 @@ class ResolveGame extends FlameGame with HasTimeScale {
   bool haptics = true;
   final caption = ValueNotifier<String>('');
   final _tokens = <String, CharacterToken>{};
-  final _cellFrames = <RectangleComponent>[];
+  final _cellFrames = <CellFrame>[];
   bool _busy = false;
 
   ResolveGame({this.viewerIndex = 0});
 
   bool get isPlaying => _busy;
+
+  /// Ids of the characters standing on the board now.
+  Set<String> get onBoard => _tokens.keys.toSet();
 
   @override
   Color backgroundColor() => const Color(0xFF14161F);
@@ -61,7 +64,8 @@ class ResolveGame extends FlameGame with HasTimeScale {
     return Vector2(x, y);
   }
 
-  /// Faint frames for every cell, so an empty cell still reads as a cell.
+  /// A dashed frame under every cell (LAYOUT-4), so an empty cell, including one a dead
+  /// character has just left (DEAD-1), still reads as a cell.
   void _drawCells() {
     for (final f in _cellFrames) {
       f.removeFromParent();
@@ -69,16 +73,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
     _cellFrames.clear();
     for (final pi in [0, 1]) {
       for (var slot = 0; slot < boardSize; slot++) {
-        final frame = RectangleComponent(
-          size: cardSize,
-          anchor: Anchor.center,
-          position: cellCenter(Cell(pi, slot)),
-          priority: -1,
-          paint: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5
-            ..color = const Color(0x22FFFFFF),
-        );
+        final frame = CellFrame(size: cardSize, center: cellCenter(Cell(pi, slot)));
         _cellFrames.add(frame);
         world.add(frame);
       }
@@ -158,11 +153,13 @@ class ResolveGame extends FlameGame with HasTimeScale {
       _cameraShake();
     }
     await Future.wait(reactions);
+    // DEAD-3: the actor died during its own action and has left the board.
+    if (!_tokens.containsKey(step.actorId)) return;
 
     if (hostile) {
       await _fx(actor, MoveByEffect(Vector2(-towardFoe * actor.size.x * 0.35, 0), EffectController(duration: 0.16, curve: Curves.easeOut)));
     }
-    await _fx(actor, ScaleEffect.to(Vector2.all(actor.character.isDead ? 0.85 : 1.0), EffectController(duration: 0.12)));
+    await _fx(actor, ScaleEffect.to(Vector2.all(1.0), EffectController(duration: 0.12)));
     actor.priority = 0;
     await _wait(0.12);
   }
@@ -198,13 +195,23 @@ class ResolveGame extends FlameGame with HasTimeScale {
           _haptic(HapticFeedback.selectionClick);
           futures.add(_fx(t, MoveToEffect(cellCenter(b.to!), EffectController(duration: 0.35, curve: Curves.easeInOutCubic))));
         case BeatKind.death:
-          _haptic(HapticFeedback.heavyImpact);
-          futures.add(_wait(0.15).then((_) => t.showKo()));
+          futures.add(_leaveBoard(id, t));
       }
       dy += t.size.y * 0.18;
     }
     t.sync(after);
     await Future.wait(futures);
+  }
+
+  /// DEAD-1, CELL-6: the character dies and leaves its cell at this step; the cell is left empty.
+  Future<void> _leaveBoard(String id, CharacterToken t) async {
+    _tokens.remove(id);
+    _haptic(HapticFeedback.heavyImpact);
+    await _wait(0.15);
+    t.showKo();
+    await _wait(0.5);
+    await _fx(t, ScaleEffect.to(Vector2.zero(), EffectController(duration: 0.25, curve: Curves.easeIn)));
+    t.removeFromParent();
   }
 
   Future<void> _floating(CharacterToken t, String text, Color color, double dy, {bool big = false}) {
@@ -273,4 +280,34 @@ class ResolveGame extends FlameGame with HasTimeScale {
     world.add(TimerComponent(period: seconds, removeOnFinish: true, onTick: done.complete));
     return done.future;
   }
+}
+
+/// An empty cell: a faint dashed rounded frame, drawn under every cell of the board.
+class CellFrame extends PositionComponent {
+  CellFrame({required Vector2 size, required Vector2 center})
+      : super(size: size, position: center, anchor: Anchor.center, priority: -1);
+
+  static const _dash = 6.0;
+  static const _gap = 5.0;
+  final _paint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5
+    ..color = const Color(0x33FFFFFF);
+
+  late final Path _dashes = _dashed(
+    Path()..addRRect(RRect.fromRectAndRadius(size.toRect(), Radius.circular(size.x * 0.12))),
+  );
+
+  static Path _dashed(Path outline) {
+    final dashes = Path();
+    for (final metric in outline.computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += _dash + _gap) {
+        dashes.addPath(metric.extractPath(d, min(d + _dash, metric.length)), Offset.zero);
+      }
+    }
+    return dashes;
+  }
+
+  @override
+  void render(Canvas canvas) => canvas.drawPath(_dashes, _paint);
 }

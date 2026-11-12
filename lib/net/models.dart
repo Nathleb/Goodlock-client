@@ -184,10 +184,15 @@ class CharacterView {
 
 class PlayerView {
   final int playerIndex;
-  final List<CharacterView> team;
-  const PlayerView(this.playerIndex, this.team);
+  final List<CharacterView> team; // on the board only, ordered by slot (position.slot is the truth)
+  final List<CharacterView> fallen; // dead and off the board (DEAD-1), in order of death, hp 0
+  const PlayerView(this.playerIndex, this.team, [this.fallen = const []]);
 
-  factory PlayerView.fromJson(Json j) => PlayerView(j['playerIndex'] as int, _list(j['team'], CharacterView.fromJson));
+  factory PlayerView.fromJson(Json j) => PlayerView(
+        j['playerIndex'] as int,
+        _list(j['team'], CharacterView.fromJson),
+        _list(j['fallen'], CharacterView.fromJson),
+      );
 }
 
 /// Team preview, per viewer: both revealed decks and only my own pick.
@@ -307,13 +312,11 @@ class RoundResolved {
 }
 
 class GameOver {
-  final Object winner; // 0, 1 or 'draw'
+  final int winner; // player index; there is no draw (END-1)
   final String reason;
   const GameOver(this.winner, this.reason);
 
-  bool get isDraw => winner == 'draw';
-
-  factory GameOver.fromJson(Json j) => GameOver(j['winner'] as Object, j['reason'] as String);
+  factory GameOver.fromJson(Json j) => GameOver(j['winner'] as int, j['reason'] as String);
 }
 
 class Deck {

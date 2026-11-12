@@ -190,9 +190,43 @@ void main() {
     expect(r.gameState.phase, Phase.result);
   });
 
-  test('GameOver accepts a player index or a draw', () {
-    expect(GameOver.fromJson({'winner': 1, 'reason': 'elimination'}).winner, 1);
-    expect(GameOver.fromJson({'winner': 'draw', 'reason': 'elimination'}).isDraw, isTrue);
+  test('GameOver parses the winner, a player index: there is no draw', () {
+    final over = {'winner': 1, 'reason': 'elimination'};
+
+    expectValid('GameOverDTO', over);
+    expect(GameOver.fromJson(over).winner, 1);
+    expect(schemaFor('GameOverDTO').validate({...over, 'winner': 'draw'}).isValid, isFalse);
+  });
+
+  test('PlayerView parses the fallen, off the board, apart from the team on the board', () {
+    final full = {
+      'modifiers': <Object>[],
+      'stats': {'POWER': 0, 'ARMOR': 0},
+      'states': {'SPEED': 0, 'VITALITY': 0, 'STUN': 0, 'ROOT': 0, 'DIVINE_SHIELD': 0},
+    };
+    final player = {
+      'playerIndex': 1,
+      'team': [
+        {...character('b', playerIndex: 1, slot: 2), ...full},
+        {...character('c', playerIndex: 1, slot: 4), ...full},
+      ],
+      'fallen': [
+        {...character('d', playerIndex: 1, slot: 0, hp: 0), ...full},
+        {...character('e', playerIndex: 1, slot: 3, hp: 0), ...full},
+      ],
+    };
+
+    expectValid('PlayerGameStateDTO', player);
+    final p = PlayerView.fromJson(player);
+    expect(p.team.map((c) => c.id), ['b', 'c']);
+    expect(p.fallen.map((c) => c.id), ['d', 'e']);
+    expect(p.fallen.every((c) => c.isDead), isTrue);
+  });
+
+  test('the hidden opponent (SELECTION, PLACEMENT) parses to no team and no fallen', () {
+    final p = PlayerView.fromJson({'playerIndex': 0, 'team': [], 'fallen': []});
+    expect(p.team, isEmpty);
+    expect(p.fallen, isEmpty);
   });
 
   test('parses real roundResolved payloads recorded from the backend', () {
@@ -201,10 +235,13 @@ void main() {
     for (final j in raw) {
       final r = RoundResolved.fromJson(j as Json);
       expect(r.resolveLog, isNotEmpty);
-      expect(r.gameState.players.map((p) => p.team.length), [teamSize, teamSize]);
       for (final p in r.gameState.players) {
-        // One cell per side stays empty: the team occupies teamSize distinct slots of the board.
-        expect(p.team.map((c) => c.position.slot).toSet(), hasLength(teamSize));
+        // DEAD-1: the dead have left the board for `fallen`.
+        expect(p.team.length + p.fallen.length, teamSize);
+        expect(p.team.any((c) => c.isDead), isFalse);
+        expect(p.fallen.every((c) => c.isDead), isTrue);
+        // At least one cell per side stays empty: each character on the board has its own slot.
+        expect(p.team.map((c) => c.position.slot).toSet(), hasLength(p.team.length));
         expect(p.team.every((c) => c.position.slot >= 0 && c.position.slot < boardSize), isTrue);
       }
       expect(r.gameState.players.expand((p) => p.team).every((c) => c.catalogId.isNotEmpty), isTrue);

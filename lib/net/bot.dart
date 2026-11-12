@@ -44,8 +44,11 @@ class Bot {
     if (me < 0) return;
     final opponent = gs.players[1 - me];
     if (gs.phase == Phase.roll || gs.phase == Phase.keep) combatStarted = true;
-    if (!combatStarted && opponent.team.isNotEmpty) {
+    if (!combatStarted && (opponent.team.isNotEmpty || opponent.fallen.isNotEmpty)) {
       failures.add('$name saw the opponent team before combat (${gs.phase})');
+    }
+    if (gs.players.expand((p) => p.team).any((c) => c.isDead)) {
+      failures.add('$name saw a dead character still on the board (${gs.phase})');
     }
     final ready = gs.myReady;
 
@@ -73,8 +76,8 @@ class Bot {
         final key = '${gs.currentRound}/${gs.rollsLeft}';
         if (!ready && _lastKeepKey != key) {
           _lastKeepKey = key;
-          final alive = gs.players[me].team.where((c) => !c.isDead).map((c) => c.id).toList();
-          socket.confirmKeep(alive.where((_) => rng.nextBool()).toList());
+          final onBoard = gs.players[me].team.map((c) => c.id).toList();
+          socket.confirmKeep(onBoard.where((_) => rng.nextBool()).toList());
         }
       default:
         break;

@@ -41,7 +41,7 @@ Future<void> main(List<String> args) async {
     }
     a.socket.resolved.listen((r) {
       rounds++;
-      final dead = r.gameState.players.map((p) => p.team.where((c) => c.isDead).length).toList();
+      final dead = r.gameState.players.map((p) => p.fallen.length).toList();
       stdout.writeln('round $rounds resolved: ${r.resolveLog.length} steps, dead per side $dead');
     });
     final over = a.socket.gameOver.first;

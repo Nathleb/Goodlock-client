@@ -117,7 +117,7 @@ class _LiveMatchScreenState extends State<LiveMatchScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                over.isDraw ? 'Égalité' : (over.winner == me ? 'Victoire (${over.reason})' : 'Défaite (${over.reason})'),
+                over.winner == me ? 'Victoire (${over.reason})' : 'Défaite (${over.reason})',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),

@@ -689,7 +689,8 @@
                 "slot": 3
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -1395,7 +1396,8 @@
                 "slot": 4
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -4381,7 +4383,8 @@
                 "slot": 3
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -5100,7 +5103,8 @@
                 "slot": 4
               }
             }
-          ]
+          ],
+          "fallen": []
         }
       ]
     },
@@ -8507,7 +8511,8 @@
                 "slot": 3
               }
             }
-          ]
+          ],
+          "fallen": []
         },
         {
           "playerIndex": 1,
@@ -8675,170 +8680,6 @@
               "position": {
                 "playerIndex": 1,
                 "slot": 0
-              }
-            },
-            {
-              "id": "b31eb304-d8ac-4102-b463-d0e1ceb19d17",
-              "catalogId": "fiona",
-              "name": "Fiona",
-              "hp": 0,
-              "maxHp": 15,
-              "shield": 0,
-              "baseSpeed": 8,
-              "baseDie": [
-                {
-                  "description": "Heal the ally in the next slot for 5 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 5,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal the ally in the next slot for 4 HP and grant 2 shield to the ally in the next slot.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "effect": "Shield",
-                      "magnitude": 2,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal the ally in the next slot for 6 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 6,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal self for 4 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            0
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Grant 4 shield to the ally in the next slot.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Shield",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal self and adjacent allies for 3 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 3,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            -1,
-                            0,
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "face": {
-                "description": "Heal self for 4 HP.",
-                "priority": 1,
-                "effects": [
-                  {
-                    "effect": "Heal",
-                    "magnitude": 4,
-                    "targets": [
-                      {
-                        "side": "ALLY",
-                        "mode": "RELATIVE",
-                        "n": [
-                          0
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              "isFaceLocked": true,
-              "position": {
-                "playerIndex": 1,
-                "slot": 2
               }
             },
             {
@@ -9235,6 +9076,172 @@
               "position": {
                 "playerIndex": 1,
                 "slot": 4
+              }
+            }
+          ],
+          "fallen": [
+            {
+              "id": "b31eb304-d8ac-4102-b463-d0e1ceb19d17",
+              "catalogId": "fiona",
+              "name": "Fiona",
+              "hp": 0,
+              "maxHp": 15,
+              "shield": 0,
+              "baseSpeed": 8,
+              "baseDie": [
+                {
+                  "description": "Heal the ally in the next slot for 5 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 5,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal the ally in the next slot for 4 HP and grant 2 shield to the ally in the next slot.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "effect": "Shield",
+                      "magnitude": 2,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal the ally in the next slot for 6 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 6,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal self for 4 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            0
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Grant 4 shield to the ally in the next slot.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Shield",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal self and adjacent allies for 3 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 3,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            -1,
+                            0,
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "face": {
+                "description": "Heal self for 4 HP.",
+                "priority": 1,
+                "effects": [
+                  {
+                    "effect": "Heal",
+                    "magnitude": 4,
+                    "targets": [
+                      {
+                        "side": "ALLY",
+                        "mode": "RELATIVE",
+                        "n": [
+                          0
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "isFaceLocked": true,
+              "position": {
+                "playerIndex": 1,
+                "slot": 2
               }
             }
           ]
@@ -12293,7 +12300,9 @@
                 "playerIndex": 0,
                 "slot": 2
               }
-            },
+            }
+          ],
+          "fallen": [
             {
               "id": "7e61de51-e006-4d4f-9203-283f5164f018",
               "catalogId": "eve",
@@ -12631,172 +12640,6 @@
               "position": {
                 "playerIndex": 1,
                 "slot": 0
-              }
-            },
-            {
-              "id": "b31eb304-d8ac-4102-b463-d0e1ceb19d17",
-              "catalogId": "fiona",
-              "name": "Fiona",
-              "hp": 0,
-              "maxHp": 15,
-              "shield": 0,
-              "baseSpeed": 8,
-              "baseDie": [
-                {
-                  "description": "Heal the ally in the next slot for 5 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 5,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal the ally in the next slot for 4 HP and grant 2 shield to the ally in the next slot.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "effect": "Shield",
-                      "magnitude": 2,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal the ally in the next slot for 6 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 6,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal self for 4 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            0
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Grant 4 shield to the ally in the next slot.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Shield",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal self and adjacent allies for 3 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 3,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            -1,
-                            0,
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "face": {
-                "description": "Heal self and adjacent allies for 3 HP.",
-                "priority": 1,
-                "effects": [
-                  {
-                    "effect": "Heal",
-                    "magnitude": 3,
-                    "targets": [
-                      {
-                        "side": "ALLY",
-                        "mode": "RELATIVE",
-                        "n": [
-                          -1,
-                          0,
-                          1
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              "isFaceLocked": false,
-              "position": {
-                "playerIndex": 1,
-                "slot": 2
               }
             },
             {
@@ -13178,6 +13021,174 @@
               "position": {
                 "playerIndex": 1,
                 "slot": 4
+              }
+            }
+          ],
+          "fallen": [
+            {
+              "id": "b31eb304-d8ac-4102-b463-d0e1ceb19d17",
+              "catalogId": "fiona",
+              "name": "Fiona",
+              "hp": 0,
+              "maxHp": 15,
+              "shield": 0,
+              "baseSpeed": 8,
+              "baseDie": [
+                {
+                  "description": "Heal the ally in the next slot for 5 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 5,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal the ally in the next slot for 4 HP and grant 2 shield to the ally in the next slot.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "effect": "Shield",
+                      "magnitude": 2,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal the ally in the next slot for 6 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 6,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal self for 4 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            0
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Grant 4 shield to the ally in the next slot.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Shield",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal self and adjacent allies for 3 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 3,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            -1,
+                            0,
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "face": {
+                "description": "Heal self and adjacent allies for 3 HP.",
+                "priority": 1,
+                "effects": [
+                  {
+                    "effect": "Heal",
+                    "magnitude": 3,
+                    "targets": [
+                      {
+                        "side": "ALLY",
+                        "mode": "RELATIVE",
+                        "n": [
+                          -1,
+                          0,
+                          1
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "isFaceLocked": false,
+              "position": {
+                "playerIndex": 1,
+                "slot": 2
               }
             }
           ]
@@ -15461,7 +15472,9 @@
                 "playerIndex": 0,
                 "slot": 2
               }
-            },
+            }
+          ],
+          "fallen": [
             {
               "id": "7e61de51-e006-4d4f-9203-283f5164f018",
               "catalogId": "eve",
@@ -15803,170 +15816,6 @@
               "position": {
                 "playerIndex": 1,
                 "slot": 0
-              }
-            },
-            {
-              "id": "b31eb304-d8ac-4102-b463-d0e1ceb19d17",
-              "catalogId": "fiona",
-              "name": "Fiona",
-              "hp": 0,
-              "maxHp": 15,
-              "shield": 0,
-              "baseSpeed": 8,
-              "baseDie": [
-                {
-                  "description": "Heal the ally in the next slot for 5 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 5,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal the ally in the next slot for 4 HP and grant 2 shield to the ally in the next slot.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "effect": "Shield",
-                      "magnitude": 2,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal the ally in the next slot for 6 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 6,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal self for 4 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            0
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Grant 4 shield to the ally in the next slot.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Shield",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal self and adjacent allies for 3 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 3,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            -1,
-                            0,
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "face": {
-                "description": "Heal the ally in the next slot for 6 HP.",
-                "priority": 1,
-                "effects": [
-                  {
-                    "effect": "Heal",
-                    "magnitude": 6,
-                    "targets": [
-                      {
-                        "side": "ALLY",
-                        "mode": "RELATIVE",
-                        "n": [
-                          1
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              "isFaceLocked": false,
-              "position": {
-                "playerIndex": 1,
-                "slot": 2
               }
             },
             {
@@ -16350,6 +16199,172 @@
               "position": {
                 "playerIndex": 1,
                 "slot": 4
+              }
+            }
+          ],
+          "fallen": [
+            {
+              "id": "b31eb304-d8ac-4102-b463-d0e1ceb19d17",
+              "catalogId": "fiona",
+              "name": "Fiona",
+              "hp": 0,
+              "maxHp": 15,
+              "shield": 0,
+              "baseSpeed": 8,
+              "baseDie": [
+                {
+                  "description": "Heal the ally in the next slot for 5 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 5,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal the ally in the next slot for 4 HP and grant 2 shield to the ally in the next slot.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "effect": "Shield",
+                      "magnitude": 2,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal the ally in the next slot for 6 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 6,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal self for 4 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            0
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Grant 4 shield to the ally in the next slot.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Shield",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal self and adjacent allies for 3 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 3,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            -1,
+                            0,
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "face": {
+                "description": "Heal the ally in the next slot for 6 HP.",
+                "priority": 1,
+                "effects": [
+                  {
+                    "effect": "Heal",
+                    "magnitude": 6,
+                    "targets": [
+                      {
+                        "side": "ALLY",
+                        "mode": "RELATIVE",
+                        "n": [
+                          1
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "isFaceLocked": false,
+              "position": {
+                "playerIndex": 1,
+                "slot": 2
               }
             }
           ]
@@ -18673,6 +18688,173 @@
                 "playerIndex": 0,
                 "slot": 1
               }
+            }
+          ],
+          "fallen": [
+            {
+              "id": "7e61de51-e006-4d4f-9203-283f5164f018",
+              "catalogId": "eve",
+              "name": "Eve",
+              "hp": 0,
+              "maxHp": 20,
+              "shield": 0,
+              "baseSpeed": 3,
+              "baseDie": [
+                {
+                  "description": "Deal 2 damage to all enemies.",
+                  "priority": 0,
+                  "effects": [
+                    {
+                      "effect": "Damage",
+                      "magnitude": 2,
+                      "targets": [
+                        {
+                          "side": "ENEMY",
+                          "mode": "ABSOLUTE",
+                          "n": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Deal 1 damage to all enemies.",
+                  "priority": 0,
+                  "effects": [
+                    {
+                      "effect": "Damage",
+                      "magnitude": 1,
+                      "targets": [
+                        {
+                          "side": "ENEMY",
+                          "mode": "ABSOLUTE",
+                          "n": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Deal 6 damage to the enemy in front.",
+                  "priority": 0,
+                  "effects": [
+                    {
+                      "effect": "Damage",
+                      "magnitude": 6,
+                      "targets": [
+                        {
+                          "side": "ENEMY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            0
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Grant 2 shield to all allies.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Shield",
+                      "magnitude": 2,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "ABSOLUTE",
+                          "n": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Gain 5 shield.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Shield",
+                      "magnitude": 5,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            0
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Deal 3 damage to all enemies.",
+                  "priority": 0,
+                  "effects": [
+                    {
+                      "effect": "Damage",
+                      "magnitude": 3,
+                      "targets": [
+                        {
+                          "side": "ENEMY",
+                          "mode": "ABSOLUTE",
+                          "n": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "face": {
+                "description": "Deal 6 damage to the enemy in front.",
+                "priority": 0,
+                "effects": [
+                  {
+                    "effect": "Damage",
+                    "magnitude": 6,
+                    "targets": [
+                      {
+                        "side": "ENEMY",
+                        "mode": "RELATIVE",
+                        "n": [
+                          0
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "isFaceLocked": false,
+              "position": {
+                "playerIndex": 0,
+                "slot": 3
+              }
             },
             {
               "id": "ee83876f-b32a-4360-939a-dec7888e53a9",
@@ -18852,171 +19034,6 @@
                 "playerIndex": 0,
                 "slot": 2
               }
-            },
-            {
-              "id": "7e61de51-e006-4d4f-9203-283f5164f018",
-              "catalogId": "eve",
-              "name": "Eve",
-              "hp": 0,
-              "maxHp": 20,
-              "shield": 0,
-              "baseSpeed": 3,
-              "baseDie": [
-                {
-                  "description": "Deal 2 damage to all enemies.",
-                  "priority": 0,
-                  "effects": [
-                    {
-                      "effect": "Damage",
-                      "magnitude": 2,
-                      "targets": [
-                        {
-                          "side": "ENEMY",
-                          "mode": "ABSOLUTE",
-                          "n": [
-                            0,
-                            1,
-                            2,
-                            3,
-                            4
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Deal 1 damage to all enemies.",
-                  "priority": 0,
-                  "effects": [
-                    {
-                      "effect": "Damage",
-                      "magnitude": 1,
-                      "targets": [
-                        {
-                          "side": "ENEMY",
-                          "mode": "ABSOLUTE",
-                          "n": [
-                            0,
-                            1,
-                            2,
-                            3,
-                            4
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Deal 6 damage to the enemy in front.",
-                  "priority": 0,
-                  "effects": [
-                    {
-                      "effect": "Damage",
-                      "magnitude": 6,
-                      "targets": [
-                        {
-                          "side": "ENEMY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            0
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Grant 2 shield to all allies.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Shield",
-                      "magnitude": 2,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "ABSOLUTE",
-                          "n": [
-                            0,
-                            1,
-                            2,
-                            3,
-                            4
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Gain 5 shield.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Shield",
-                      "magnitude": 5,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            0
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Deal 3 damage to all enemies.",
-                  "priority": 0,
-                  "effects": [
-                    {
-                      "effect": "Damage",
-                      "magnitude": 3,
-                      "targets": [
-                        {
-                          "side": "ENEMY",
-                          "mode": "ABSOLUTE",
-                          "n": [
-                            0,
-                            1,
-                            2,
-                            3,
-                            4
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "face": {
-                "description": "Deal 6 damage to the enemy in front.",
-                "priority": 0,
-                "effects": [
-                  {
-                    "effect": "Damage",
-                    "magnitude": 6,
-                    "targets": [
-                      {
-                        "side": "ENEMY",
-                        "mode": "RELATIVE",
-                        "n": [
-                          0
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              "isFaceLocked": false,
-              "position": {
-                "playerIndex": 0,
-                "slot": 3
-              }
             }
           ]
         },
@@ -19190,170 +19207,6 @@
               "position": {
                 "playerIndex": 1,
                 "slot": 0
-              }
-            },
-            {
-              "id": "b31eb304-d8ac-4102-b463-d0e1ceb19d17",
-              "catalogId": "fiona",
-              "name": "Fiona",
-              "hp": 0,
-              "maxHp": 15,
-              "shield": 0,
-              "baseSpeed": 8,
-              "baseDie": [
-                {
-                  "description": "Heal the ally in the next slot for 5 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 5,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal the ally in the next slot for 4 HP and grant 2 shield to the ally in the next slot.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "effect": "Shield",
-                      "magnitude": 2,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal the ally in the next slot for 6 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 6,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal self for 4 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            0
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Grant 4 shield to the ally in the next slot.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Shield",
-                      "magnitude": 4,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "description": "Heal self and adjacent allies for 3 HP.",
-                  "priority": 1,
-                  "effects": [
-                    {
-                      "effect": "Heal",
-                      "magnitude": 3,
-                      "targets": [
-                        {
-                          "side": "ALLY",
-                          "mode": "RELATIVE",
-                          "n": [
-                            -1,
-                            0,
-                            1
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "face": {
-                "description": "Heal self for 4 HP.",
-                "priority": 1,
-                "effects": [
-                  {
-                    "effect": "Heal",
-                    "magnitude": 4,
-                    "targets": [
-                      {
-                        "side": "ALLY",
-                        "mode": "RELATIVE",
-                        "n": [
-                          0
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              "isFaceLocked": false,
-              "position": {
-                "playerIndex": 1,
-                "slot": 2
               }
             },
             {
@@ -19735,6 +19588,172 @@
               "position": {
                 "playerIndex": 1,
                 "slot": 4
+              }
+            }
+          ],
+          "fallen": [
+            {
+              "id": "b31eb304-d8ac-4102-b463-d0e1ceb19d17",
+              "catalogId": "fiona",
+              "name": "Fiona",
+              "hp": 0,
+              "maxHp": 15,
+              "shield": 0,
+              "baseSpeed": 8,
+              "baseDie": [
+                {
+                  "description": "Heal the ally in the next slot for 5 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 5,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal the ally in the next slot for 4 HP and grant 2 shield to the ally in the next slot.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "effect": "Shield",
+                      "magnitude": 2,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal the ally in the next slot for 6 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 6,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal self for 4 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            0
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Grant 4 shield to the ally in the next slot.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Shield",
+                      "magnitude": 4,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "description": "Heal self and adjacent allies for 3 HP.",
+                  "priority": 1,
+                  "effects": [
+                    {
+                      "effect": "Heal",
+                      "magnitude": 3,
+                      "targets": [
+                        {
+                          "side": "ALLY",
+                          "mode": "RELATIVE",
+                          "n": [
+                            -1,
+                            0,
+                            1
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "face": {
+                "description": "Heal self for 4 HP.",
+                "priority": 1,
+                "effects": [
+                  {
+                    "effect": "Heal",
+                    "magnitude": 4,
+                    "targets": [
+                      {
+                        "side": "ALLY",
+                        "mode": "RELATIVE",
+                        "n": [
+                          0
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "isFaceLocked": false,
+              "position": {
+                "playerIndex": 1,
+                "slot": 2
               }
             }
           ]
