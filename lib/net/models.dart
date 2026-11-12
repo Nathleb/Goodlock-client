@@ -354,11 +354,17 @@ enum EndReason {
 }
 
 class GameOver {
-  final int winner; // player index; there is no draw (END-1)
+  final int? winner; // player index; null on a draw, a simultaneous loss on time (END-1)
   final EndReason reason;
-  const GameOver(this.winner, this.reason);
+  const GameOver(int this.winner, this.reason);
+  const GameOver.draw(this.reason) : winner = null;
 
-  factory GameOver.fromJson(Json j) => GameOver(j['winner'] as int, EndReason.parse(j['reason'] as String));
+  bool get isDraw => winner == null;
+
+  factory GameOver.fromJson(Json j) {
+    final reason = EndReason.parse(j['reason'] as String);
+    return j['winner'] == 'draw' ? GameOver.draw(reason) : GameOver(j['winner'] as int, reason);
+  }
 }
 
 /// A player disconnected or came back (AWAY-2), with the reconnection time they have left.

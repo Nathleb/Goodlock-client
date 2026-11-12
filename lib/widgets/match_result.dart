@@ -12,7 +12,14 @@ String endReasonText(EndReason reason, {required bool won}) => switch (reason) {
       EndReason.unknown => '',
     };
 
-/// The end of the match (FLOW-6): the winner, why (END-3), and the way out. The server has already
+/// Why the match is a draw (END-1, END-3): only a simultaneous loss on time ends in one.
+String drawReasonText(EndReason reason) => switch (reason) {
+      EndReason.clock => "Ton temps et celui de l'adversaire sont écoulés en même temps.",
+      EndReason.reconnection => "Ni toi ni l'adversaire ne vous êtes reconnectés à temps.",
+      EndReason.elimination || EndReason.concede || EndReason.unknown => '',
+    };
+
+/// The end of the match (FLOW-6): the winner or the draw, why (END-3), and the way out. The server has already
 /// closed the room (ROOM-6).
 class MatchResult extends StatelessWidget {
   final GameOver over;
@@ -23,14 +30,15 @@ class MatchResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final won = over.winner == viewerIndex;
-    final why = endReasonText(over.reason, won: won);
+    final title = over.isDraw ? 'Égalité' : (won ? 'Victoire' : 'Défaite');
+    final why = over.isDraw ? drawReasonText(over.reason) : endReasonText(over.reason, won: won);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(16)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(won ? 'Victoire' : 'Défaite', style: Theme.of(context).textTheme.headlineSmall),
+          Text(title, style: Theme.of(context).textTheme.headlineSmall),
           if (why.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text(why)),
           const SizedBox(height: 12),
           FilledButton(onPressed: onLeave, child: const Text('Retour')),

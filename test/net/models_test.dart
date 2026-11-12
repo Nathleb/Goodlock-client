@@ -187,12 +187,24 @@ void main() {
     expect(r.gameState.phase, Phase.result);
   });
 
-  test('GameOver parses the winner, a player index: there is no draw', () {
+  test('GameOver parses the winner, a player index', () {
     final over = {'winner': 1, 'reason': 'elimination'};
 
     expectValid('GameOverDTO', over);
     expect(GameOver.fromJson(over).winner, 1);
-    expect(schemaFor('GameOverDTO').validate({...over, 'winner': 'draw'}).isValid, isFalse);
+    expect(GameOver.fromJson(over).isDraw, isFalse);
+    expect(schemaFor('GameOverDTO').validate({...over, 'winner': 2}).isValid, isFalse);
+  });
+
+  test('END-1, END-3: GameOver parses a draw, a simultaneous loss on clock or reconnection time', () {
+    for (final (wire, reason) in [('clock', EndReason.clock), ('reconnection', EndReason.reconnection)]) {
+      final over = {'winner': 'draw', 'reason': wire};
+      expectValid('GameOverDTO', over);
+      final parsed = GameOver.fromJson(over);
+      expect(parsed.isDraw, isTrue);
+      expect(parsed.winner, isNull);
+      expect(parsed.reason, reason);
+    }
   });
 
   test('END-3: GameOver parses why the match ended: 2 dead characters, clock, reconnection time or concession', () {
