@@ -42,14 +42,16 @@ class ResolveView extends StatelessWidget {
 }
 
 /// Full-screen landscape frame for a game scene: the board takes the whole screen, a back button
-/// top left, the title top centre, [center] (e.g. a result) in the middle and [controls] along
-/// the bottom of the free centre band.
+/// top left, the title top centre, [status] (e.g. the clocks) along the top, [center] (e.g. a result)
+/// in the middle and [controls] along the bottom of the free centre band.
 class GameScreenFrame extends StatelessWidget {
   final ResolveGame game;
   final String title;
+  final Widget? status;
   final Widget? center;
   final List<Widget> controls;
-  const GameScreenFrame({super.key, required this.game, required this.title, this.center, this.controls = const []});
+  const GameScreenFrame(
+      {super.key, required this.game, required this.title, this.status, this.center, this.controls = const []});
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +67,7 @@ class GameScreenFrame extends StatelessWidget {
               top: 12,
               child: Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelLarge),
             ),
+            if (status != null) Positioned(left: 56, right: 8, top: 4, child: status!),
             if (center != null) Center(child: center),
             Positioned(
               left: 0,

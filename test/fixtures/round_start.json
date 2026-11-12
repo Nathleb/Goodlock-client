@@ -4,6 +4,20 @@
     "currentRound": 0,
     "initiativePlayerIndex": 0,
     "rollsLeft": 2,
+    "clocks": [
+      {
+        "remainingMs": 577400,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      },
+      {
+        "remainingMs": 581900,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      }
+    ],
     "players": [
       {
         "playerIndex": 0,
@@ -1453,14 +1467,27 @@
         ],
         "fallen": []
       }
-    ],
-    "afkClaimInMs": 120000
+    ]
   },
   {
     "phase": "KEEP_PHASE",
     "currentRound": 1,
     "initiativePlayerIndex": 1,
     "rollsLeft": 2,
+    "clocks": [
+      {
+        "remainingMs": 590000,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      },
+      {
+        "remainingMs": 593300,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      }
+    ],
     "players": [
       {
         "playerIndex": 0,
@@ -2869,14 +2896,27 @@
         ],
         "fallen": []
       }
-    ],
-    "afkClaimInMs": 120000
+    ]
   },
   {
     "phase": "KEEP_PHASE",
     "currentRound": 2,
     "initiativePlayerIndex": 0,
     "rollsLeft": 2,
+    "clocks": [
+      {
+        "remainingMs": 601600,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      },
+      {
+        "remainingMs": 604000,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      }
+    ],
     "players": [
       {
         "playerIndex": 0,
@@ -4338,14 +4378,27 @@
         ],
         "fallen": []
       }
-    ],
-    "afkClaimInMs": 120000
+    ]
   },
   {
     "phase": "KEEP_PHASE",
     "currentRound": 3,
     "initiativePlayerIndex": 1,
     "rollsLeft": 2,
+    "clocks": [
+      {
+        "remainingMs": 612200,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      },
+      {
+        "remainingMs": 615400,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      }
+    ],
     "players": [
       {
         "playerIndex": 0,
@@ -5799,14 +5852,27 @@
         ],
         "fallen": []
       }
-    ],
-    "afkClaimInMs": 120000
+    ]
   },
   {
     "phase": "KEEP_PHASE",
     "currentRound": 4,
     "initiativePlayerIndex": 0,
     "rollsLeft": 2,
+    "clocks": [
+      {
+        "remainingMs": 624800,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      },
+      {
+        "remainingMs": 626100,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      }
+    ],
     "players": [
       {
         "playerIndex": 0,
@@ -7229,14 +7295,27 @@
         ],
         "fallen": []
       }
-    ],
-    "afkClaimInMs": 120000
+    ]
   },
   {
     "phase": "KEEP_PHASE",
     "currentRound": 5,
     "initiativePlayerIndex": 1,
     "rollsLeft": 2,
+    "clocks": [
+      {
+        "remainingMs": 636400,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      },
+      {
+        "remainingMs": 637500,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      }
+    ],
     "players": [
       {
         "playerIndex": 0,
@@ -8683,14 +8762,27 @@
         ],
         "fallen": []
       }
-    ],
-    "afkClaimInMs": 120000
+    ]
   },
   {
     "phase": "KEEP_PHASE",
     "currentRound": 6,
     "initiativePlayerIndex": 0,
     "rollsLeft": 2,
+    "clocks": [
+      {
+        "remainingMs": 647000,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      },
+      {
+        "remainingMs": 648200,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      }
+    ],
     "players": [
       {
         "playerIndex": 0,
@@ -10126,14 +10218,27 @@
         ],
         "fallen": []
       }
-    ],
-    "afkClaimInMs": 120000
+    ]
   },
   {
     "phase": "KEEP_PHASE",
     "currentRound": 7,
     "initiativePlayerIndex": 1,
     "rollsLeft": 2,
+    "clocks": [
+      {
+        "remainingMs": 659600,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      },
+      {
+        "remainingMs": 659600,
+        "reconnectionMs": 180000,
+        "running": true,
+        "connected": true
+      }
+    ],
     "players": [
       {
         "playerIndex": 0,
@@ -11566,7 +11671,6 @@
         ],
         "fallen": []
       }
-    ],
-    "afkClaimInMs": 120000
+    ]
   }
 ]

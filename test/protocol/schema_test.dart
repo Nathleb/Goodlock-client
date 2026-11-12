@@ -15,12 +15,12 @@ void main() {
     }
   });
 
-  test('every recorded start board matches GameStateUpdatePayload', () {
+  test('every recorded start board matches GameStateDTO', () {
     final boards = jsonDecode(File('test/fixtures/round_start.json').readAsStringSync()) as List;
 
     expect(boards, isNotEmpty);
     for (var i = 0; i < boards.length; i++) {
-      expectValid('GameStateUpdatePayload', boards[i], reason: 'board $i');
+      expectValid('GameStateDTO', boards[i], reason: 'board $i');
     }
   });
 
