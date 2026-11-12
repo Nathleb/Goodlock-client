@@ -82,7 +82,7 @@ class GameScreenFrame extends StatelessWidget {
   }
 }
 
-/// Speed and haptics toggles shared by the demo and live screens.
+/// Speed and haptics toggles of the live screen.
 class PlaybackControls extends StatelessWidget {
   final ResolveGame game;
   final VoidCallback onChanged;
