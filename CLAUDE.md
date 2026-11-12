@@ -22,12 +22,12 @@ Read these before planning, they are not loaded automatically:
   isolated from the code: read it, never write there (permission denied). When a change needs a new
   or different rule, stop and tell the user.
 - `../Goodlock-back/docs/GLOSSARY.md`: the game terms of the rules mapped to the code names.
-- `../Goodlock-back/docs/ROADMAP.md`: the only backlog and the direction to v1.0 (read-only from here).
 - `../Goodlock-back/docs/features/active/<topic>/design.md`: the approved spec of a feature in
   progress, including its client contract.
 
-The client has its own `docs/features/active/<topic>/` (then `implemented/`), same topic and date as the
-backend feature it follows, laid out like the backend's:
+The client has its own `docs/features/active/<topic>/`, same topic and date as the backend feature it
+follows, laid out like the backend's. A folder is kept only while its feature is in progress: it is
+deleted once the feature is shipped (git keeps the history).
 
 - `design.md`, only when the feature needs UI decisions to be settled (screens, interactions,
   animation behavior). It links the backend `design.md` for rules and protocol instead of copying it.
