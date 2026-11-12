@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../app/session.dart';
 import '../net/api.dart';
 import 'home_screen.dart';
-import 'resolve_demo_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final AppSession session;
@@ -75,12 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text('Créer un compte'),
                 ),
                 const SizedBox(height: 32),
-                TextButton.icon(
-                  icon: const Icon(Icons.play_circle_outline),
-                  label: const Text('Démo Resolve hors ligne'),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ResolveDemoScreen())),
-                ),
-                const SizedBox(height: 24),
                 ExpansionTile(
                   title: const Text('Serveur'),
                   subtitle: Text(widget.session.serverUrl, overflow: TextOverflow.ellipsis),

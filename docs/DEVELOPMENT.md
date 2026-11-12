@@ -149,8 +149,7 @@ flutter test
 dart run tool/bot_match.dart --server http://localhost:3000   # full match between two bots
 ```
 
-`tool/bot_match.dart --record test/fixtures` re-records the resolve fixture used by tests and
-the offline demo (copy it to `assets/demo/round_resolved.json`).
+`tool/bot_match.dart --record test/fixtures` re-records the resolve fixtures used by tests.
 
 ## Gotchas
 

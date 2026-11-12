@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../app/session.dart';
 import 'live_match_screen.dart';
-import 'resolve_demo_screen.dart';
 
 class PlayScreen extends StatelessWidget {
   final AppSession session;
@@ -24,7 +23,6 @@ class PlayScreen extends StatelessWidget {
       children: [
         entry(Icons.smart_toy_outlined, 'Match en direct (2 bots)', 'Deux bots jouent sur le serveur ; tu regardes les rounds animés en temps réel.',
             () => LiveMatchScreen(session: session)),
-        entry(Icons.movie_outlined, 'Démo Resolve hors ligne', 'Rejoue un vrai match enregistré, sans serveur.', () => const ResolveDemoScreen()),
       ],
     );
   }
