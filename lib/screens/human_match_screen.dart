@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../app/session.dart';
 import '../game/human_match_controller.dart';
-import '../net/models.dart';
 import '../net/vs_bot.dart';
-import 'placement_screen.dart';
-import 'selection_screen.dart';
+import 'human_match_view.dart';
 
 /// A match of the player against a bot, from the room set-up to the result. The screens of each phase
 /// are drawn from [HumanMatchController].
@@ -56,31 +54,16 @@ class _HumanMatchScreenState extends State<HumanMatchScreen> {
   Widget build(BuildContext context) {
     final controller = _controller;
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            if (controller == null) ...[
-              const Positioned(left: 4, top: 4, child: BackButton()),
-              Center(child: Text(_status)),
-            ] else
-              Positioned.fill(
-                child: ListenableBuilder(
-                  listenable: controller,
-                  builder: (context, _) => switch (controller.phase) {
-                    Phase.selection => SelectionScreen(controller: controller),
-                    Phase.placement => PlacementScreen(controller: controller),
-                    _ => Center(child: Text(_describe(controller.phase))),
-                  },
-                ),
+      body: controller == null
+          ? SafeArea(
+              child: Stack(
+                children: [
+                  const Positioned(left: 4, top: 4, child: BackButton()),
+                  Center(child: Text(_status)),
+                ],
               ),
-          ],
-        ),
-      ),
+            )
+          : HumanMatchView(controller: controller, onLeave: () => Navigator.of(context).pop()),
     );
   }
-
-  String _describe(Phase? phase) => switch (phase) {
-        null => 'En attente du serveur…',
-        _ => 'Phase : ${phase.name}',
-      };
 }

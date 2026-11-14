@@ -70,6 +70,7 @@ class HumanMatchController extends ChangeNotifier {
   bool get ready => state?.myReady ?? false;
   List<CharacterView> get myTeam => state?.players[me].team ?? const [];
   bool get isResolving => _playing || _rounds.isNotEmpty;
+  bool get hasRoundToPlay => _rounds.isNotEmpty;
   bool get showResult => over != null && !isResolving;
 
   /// The Confirm button: a Selection needs exactly [teamSize] picks; once confirmed it reads Cancel (GAME-8).
