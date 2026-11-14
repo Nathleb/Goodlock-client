@@ -159,9 +159,8 @@ flutter test tool/vs_bot_e2e_test.dart --dart-define=E2E_SERVER=http://localhost
 ```
 
 In the app, the Play tab has "Jouer contre un bot": you play Selection, Placement and Keep yourself, a bot plays the
-other seat. What is still missing is listed in the feature design of the Git history
-(`docs/features/active/2026-11-14-play-vs-bot`): the timeline and Keep preview, the die view, the rolling and Upkeep
-animations, a lobby.
+other seat. Not there yet: the timeline and the Keep preview, the die view, the rolling-dice and Upkeep animations, a
+lobby, drag and drop for the Placement.
 
 ## Gotchas
 
