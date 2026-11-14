@@ -4,6 +4,7 @@ import '../app/session.dart';
 import '../game/human_match_controller.dart';
 import '../net/models.dart';
 import '../net/vs_bot.dart';
+import 'selection_screen.dart';
 
 /// A match of the player against a bot, from the room set-up to the result. The screens of each phase
 /// are drawn from [HumanMatchController].
@@ -57,15 +58,19 @@ class _HumanMatchScreenState extends State<HumanMatchScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            const Positioned(left: 4, top: 4, child: BackButton()),
-            Center(
-              child: controller == null
-                  ? Text(_status)
-                  : ListenableBuilder(
-                      listenable: controller,
-                      builder: (context, _) => Text(_describe(controller.phase)),
-                    ),
-            ),
+            if (controller == null) ...[
+              const Positioned(left: 4, top: 4, child: BackButton()),
+              Center(child: Text(_status)),
+            ] else
+              Positioned.fill(
+                child: ListenableBuilder(
+                  listenable: controller,
+                  builder: (context, _) => switch (controller.phase) {
+                    Phase.selection => SelectionScreen(controller: controller),
+                    _ => Center(child: Text(_describe(controller.phase))),
+                  },
+                ),
+              ),
           ],
         ),
       ),

@@ -58,3 +58,8 @@ GameStateView stateOf(
       players: [PlayerView(0, mine), PlayerView(1, theirs)],
       selection: selection,
     );
+
+SelectionView selectionView({List<String>? myPicks}) => SelectionView([deckOf('a'), deckOf('b')], myPicks);
+
+GameStateView selectionState({bool ready = false, List<String>? myPicks}) =>
+    stateOf(Phase.selection, myReady: ready, selection: selectionView(myPicks: myPicks));
