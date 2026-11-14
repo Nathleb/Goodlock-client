@@ -151,6 +151,18 @@ dart run tool/bot_match.dart --server http://localhost:3000   # full match betwe
 
 `tool/bot_match.dart --record test/fixtures` re-records the resolve fixtures used by tests.
 
+`tool/vs_bot_e2e_test.dart` plays a whole match of a human seat against a bot through `HumanMatchController`, with no
+screen, on a running backend (it registers a fresh account):
+
+```bash
+flutter test tool/vs_bot_e2e_test.dart --dart-define=E2E_SERVER=http://localhost:3000
+```
+
+In the app, the Play tab has "Jouer contre un bot": you play Selection, Placement and Keep yourself, a bot plays the
+other seat. What is still missing is listed in the feature design of the Git history
+(`docs/features/active/2026-11-14-play-vs-bot`): the timeline and Keep preview, the die view, the rolling and Upkeep
+animations, a lobby.
+
 ## Gotchas
 
 - Every `adb` command hangs (WSL mirrored mode, no adb server yet): run `tool/phone.sh server`.
