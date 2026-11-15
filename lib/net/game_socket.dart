@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
+import 'match_link.dart';
 import 'models.dart';
 
 /// Typed wrapper over the backend's Socket.IO gateway (Goodlock-back session.gateway.ts).
-class GameSocket {
+class GameSocket implements MatchLink {
   final io.Socket _socket;
 
   final _rooms = StreamController<RoomView>.broadcast();
@@ -16,11 +17,17 @@ class GameSocket {
   final _errors = StreamController<String>.broadcast();
   final _sessionId = Completer<String>();
 
+  @override
   Stream<RoomView> get rooms => _rooms.stream; // roomCreated + roomUpdated
+  @override
   Stream<GameStateView> get states => _states.stream; // gameStateUpdated
+  @override
   Stream<RoundResolved> get resolved => _resolved.stream; // roundResolved
+  @override
   Stream<GameOver> get gameOver => _gameOver.stream; // the room is closed with it (ROOM-6)
+  @override
   Stream<PresenceChanged> get presence => _presence.stream; // presenceChanged
+  @override
   Stream<String> get errors => _errors.stream;
 
   /// Sent by the server on connect; locate it in [RoomView.players] to know your player index.
@@ -77,16 +84,24 @@ class GameSocket {
 
   // Game
   void startGame() => _socket.emit('startGame');
+  @override
   void confirmSelection(List<String> catalogIds) => _socket.emit('confirmSelection', {'characterIds': catalogIds});
+  @override
   void cancelSelection() => _socket.emit('cancelSelection');
   /// [slots] reads like the board: a character id per cell, null for the empty cell.
+  @override
   void rearrangeTeam(List<String?> slots) => _socket.emit('rearrangeTeam', {'slots': slots});
+  @override
   void confirmPlacement() => _socket.emit('confirmPlacement');
+  @override
   void cancelPlacement() => _socket.emit('cancelPlacement');
+  @override
   void confirmKeep(List<String> lockedCharacterIds) =>
       _socket.emit('confirmKeep', {'lockedCharacterIds': lockedCharacterIds});
+  @override
   void cancelKeep() => _socket.emit('cancelKeep');
   /// AWAY-1: the player concedes and loses at once.
+  @override
   void concede() => _socket.emit('concede');
 
   static Json _json(dynamic data) => Map<String, dynamic>.from(data as Map);
