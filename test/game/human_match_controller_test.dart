@@ -1,62 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goodlock_app/game/human_match_controller.dart';
-import 'package:goodlock_app/net/match_link.dart';
 import 'package:goodlock_app/net/models.dart';
 
 import '../helpers/builders.dart';
-
-/// A link with no network: tests push what the server would send and read what the client sent.
-class FakeLink implements MatchLink {
-  final _rooms = StreamController<RoomView>.broadcast(sync: true);
-  final _states = StreamController<GameStateView>.broadcast(sync: true);
-  final _resolved = StreamController<RoundResolved>.broadcast(sync: true);
-  final _over = StreamController<GameOver>.broadcast(sync: true);
-  final _presence = StreamController<PresenceChanged>.broadcast(sync: true);
-  final _errors = StreamController<String>.broadcast(sync: true);
-  final sent = <String>[];
-
-  @override
-  Stream<RoomView> get rooms => _rooms.stream;
-  @override
-  Stream<GameStateView> get states => _states.stream;
-  @override
-  Stream<RoundResolved> get resolved => _resolved.stream;
-  @override
-  Stream<GameOver> get gameOver => _over.stream;
-  @override
-  Stream<PresenceChanged> get presence => _presence.stream;
-  @override
-  Stream<String> get errors => _errors.stream;
-
-  void server(GameStateView s) => _states.add(s);
-  void serverResolved(RoundResolved r) => _resolved.add(r);
-  void serverOver(GameOver o) => _over.add(o);
-  void serverError(String m) => _errors.add(m);
-
-  @override
-  void confirmSelection(List<String> catalogIds) => sent.add('confirmSelection ${catalogIds.join(',')}');
-  @override
-  void cancelSelection() => sent.add('cancelSelection');
-  @override
-  void rearrangeTeam(List<String?> slots) => sent.add('rearrangeTeam ${slots.map((s) => s ?? '-').join(',')}');
-  @override
-  void confirmPlacement() => sent.add('confirmPlacement');
-  @override
-  void cancelPlacement() => sent.add('cancelPlacement');
-  @override
-  void confirmKeep(List<String> lockedCharacterIds) => sent.add('confirmKeep ${lockedCharacterIds.join(',')}');
-  @override
-  void cancelKeep() => sent.add('cancelKeep');
-  @override
-  void concede() => sent.add('concede');
-}
-
-SelectionView selectionView({List<String>? myPicks}) => SelectionView([deckOf('a'), deckOf('b')], myPicks);
-
-GameStateView selectionState({bool ready = false, List<String>? myPicks}) =>
-    stateOf(Phase.selection, myReady: ready, selection: selectionView(myPicks: myPicks));
+import '../helpers/fake_link.dart';
 
 List<CharacterView> myTeam({List<String> locked = const []}) =>
     [for (var i = 0; i < 4; i++) character('m$i', side: 0, slot: i, locked: locked.contains('m$i'))];
