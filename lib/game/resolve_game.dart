@@ -24,6 +24,12 @@ const _effectColors = {
   'ApplyState': Color(0xFF2EC4B6), // status: not hostile
 };
 
+/// The caption of an action: the parts of its effects, each once, in order.
+String actionLabels(List<ResolvedEffect> effects) => effects.expand((e) => e.parts).toSet().join(' + ');
+
+/// Only a Damage part that reached a cell is hostile: FixedDamage is a cost paid, so no lunge.
+bool isHostileAction(List<ResolvedEffect> effects) => effects.any((e) => e.parts.contains('Damage') && !e.fizzled);
+
 /// Plays the server's resolve log on a landscape board, two facing columns of [boardSize] cells
 /// (the viewer on the left, slot 0 on top), with impact, numbers, shakes and haptics.
 /// Display only: every number shown comes from the server's `changes`.
@@ -113,7 +119,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
   Future<void> _playStep(StepPlan step) async {
     final actor = _tokens[step.actorId];
     if (actor == null) return;
-    final labels = step.effects.map((e) => e.effect).toSet().join(' + ');
+    final labels = actionLabels(step.effects);
     caption.value = step.skipped ? '${actor.character.name} ne peut pas agir' : '${actor.character.name} — $labels';
 
     if (step.skipped) {
@@ -125,8 +131,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
     actor.priority = 10;
     await _fx(actor, ScaleEffect.to(Vector2.all(1.12), EffectController(duration: 0.12, curve: Curves.easeOut)));
 
-    // Only 'Damage' is hostile: FixedDamage is a cost paid, so no lunge.
-    final hostile = step.effects.any((e) => e.effect == 'Damage' && !e.fizzled);
+    final hostile = isHostileAction(step.effects);
     // Lunge toward the opposing column.
     final towardFoe = actor.isMine ? 1.0 : -1.0;
     if (hostile) {
@@ -136,7 +141,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
     // Impact rings on every resolved cell.
     for (final e in step.effects) {
       for (final cell in e.targets) {
-        _ring(cellCenter(cell), _effectColors[e.effect] ?? const Color(0xFFFFFFFF));
+        _ring(cellCenter(cell), _effectColors[e.parts.first] ?? const Color(0xFFFFFFFF));
       }
     }
 

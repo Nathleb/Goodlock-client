@@ -7,7 +7,7 @@ import 'package:goodlock_app/widgets/match_board.dart';
 import '../helpers/builders.dart';
 
 void main() {
-  const damage = DieFace('hit', 1, [FaceEffect('Damage', 5, [])]);
+  const damage = DieFace('hit', 1, [FaceEffect([], [FacePart('Damage', 5)])]);
 
   List<CharacterView> mine() => [
     character('m0', side: 0, slot: 0, face: damage),

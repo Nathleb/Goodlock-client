@@ -13,15 +13,16 @@ const effectColors = {
   'ApplyState': Color(0xFF2EC4B6),
 };
 
-String _chipText(FaceEffect e) {
-  if (e.effect == 'ApplyStat') {
+String _chipText(FacePart e) {
+  if (e.part == 'ApplyStat') {
     return '${e.stat} ${e.magnitude >= 0 ? '+' : ''}${e.magnitude} · ${e.duration} t.';
   }
-  if (e.effect == 'ApplyState') return '${e.state} · ${e.duration} t.';
-  return '${e.effect} ${e.effect == 'Swap' ? '' : e.magnitude}';
+  if (e.part == 'ApplyState') return '${e.state} · ${e.duration} t.';
+  return '${e.part} ${e.part == 'Swap' ? '' : e.magnitude}';
 }
 
-/// One die face: description, priority bracket, each effect with a mini targeting grid.
+/// One die face: description, priority bracket, each effect with one chip per part and a mini
+/// targeting grid in the colour of its first part.
 class DieFaceTile extends StatelessWidget {
   final DieFace face;
   final int index;
@@ -50,13 +51,15 @@ class DieFaceTile extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Row(
                         children: [
-                          Chip(
-                            visualDensity: VisualDensity.compact,
-                            label: Text(_chipText(e)),
-                            side: BorderSide(color: effectColors[e.effect] ?? Colors.white24),
-                          ),
-                          const SizedBox(width: 8),
-                          TargetGrid(groups: e.targets, color: effectColors[e.effect] ?? Colors.white),
+                          for (final part in e.parts) ...[
+                            Chip(
+                              visualDensity: VisualDensity.compact,
+                              label: Text(_chipText(part)),
+                              side: BorderSide(color: effectColors[part.part] ?? Colors.white24),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          TargetGrid(groups: e.targets, color: effectColors[e.parts.first.part] ?? Colors.white),
                         ],
                       ),
                     ),

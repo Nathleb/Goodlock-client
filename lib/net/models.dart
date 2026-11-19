@@ -47,23 +47,32 @@ class TargetGroup {
       TargetGroup(j['side'] as String, j['mode'] as String, List<int>.from(j['n'] as List));
 }
 
-class FaceEffect {
-  final String effect;
+/// One thing an effect does to its cells (Damage, Heal, Swap, ApplyStat...).
+class FacePart {
+  final String part;
   final int magnitude;
-  final List<TargetGroup> targets;
   final String? stat; // ApplyStat only
   final String? state; // ApplyState only
   final int? duration; // ApplyStat and ApplyState, in rounds
-  const FaceEffect(this.effect, this.magnitude, this.targets, {this.stat, this.state, this.duration});
+  const FacePart(this.part, this.magnitude, {this.stat, this.state, this.duration});
 
-  factory FaceEffect.fromJson(Json j) => FaceEffect(
-        j['effect'] as String,
+  factory FacePart.fromJson(Json j) => FacePart(
+        j['part'] as String,
         j['magnitude'] as int,
-        _list(j['targets'], TargetGroup.fromJson),
         stat: j['stat'] as String?,
         state: j['state'] as String?,
         duration: j['duration'] as int?,
       );
+}
+
+/// One step of a face: its target cells and its parts, applied in order on each cell.
+class FaceEffect {
+  final List<TargetGroup> targets;
+  final List<FacePart> parts;
+  const FaceEffect(this.targets, this.parts);
+
+  factory FaceEffect.fromJson(Json j) =>
+      FaceEffect(_list(j['targets'], TargetGroup.fromJson), _list(j['parts'], FacePart.fromJson));
 }
 
 /// An active buff/debuff instance on a character.
@@ -296,14 +305,16 @@ class RoomView {
       );
 }
 
+/// One effect of an action as it resolved: its parts, in order, and its cells.
 class ResolvedEffect {
-  final String effect;
+  final List<String> parts;
   final List<Cell> targets;
-  const ResolvedEffect(this.effect, this.targets);
+  const ResolvedEffect(this.parts, this.targets);
 
   bool get fizzled => targets.isEmpty;
 
-  factory ResolvedEffect.fromJson(Json j) => ResolvedEffect(j['effect'] as String, _list(j['targets'], Cell.fromJson));
+  factory ResolvedEffect.fromJson(Json j) =>
+      ResolvedEffect(List<String>.from(j['parts'] as List), _list(j['targets'], Cell.fromJson));
 }
 
 class ResolveChange {

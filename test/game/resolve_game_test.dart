@@ -29,6 +29,20 @@ Future<ResolveGame> pumpGame(WidgetTester tester, {int viewerIndex = 0}) async {
 }
 
 void main() {
+  test('the caption of an action lists the parts of its effects, each once, in order', () {
+    const effects = [
+      ResolvedEffect(['Damage', 'ApplyState'], [Cell(1, 0)]),
+      ResolvedEffect(['Heal', 'Damage'], [Cell(0, 0)]),
+    ];
+    expect(actionLabels(effects), 'Damage + ApplyState + Heal');
+  });
+
+  test('an action is hostile when one of its effects has a Damage part that reached a cell', () {
+    expect(isHostileAction(const [ResolvedEffect(['Shield', 'Damage'], [Cell(1, 0)])]), isTrue);
+    expect(isHostileAction(const [ResolvedEffect(['Damage'], [])]), isFalse);
+    expect(isHostileAction(const [ResolvedEffect(['FixedDamage', 'Heal'], [Cell(0, 0)])]), isFalse);
+  });
+
   testWidgets('plays every recorded round to the end without errors', (
     tester,
   ) async {
@@ -71,10 +85,10 @@ void main() {
       final game = await pumpGame(tester);
       final before = [ch('killer', 0, 1), ch('victim', 1, 1, hp: 3), ch('other', 1, 3)];
       final log = [
-        ResolveStep('killer', false, const [ResolvedEffect('Damage', [Cell(1, 1)])], [
+        ResolveStep('killer', false, const [ResolvedEffect(['Damage'], [Cell(1, 1)])], [
           ResolveChange('victim', ch('victim', 1, 1, hp: 0)),
         ]),
-        ResolveStep('other', false, const [ResolvedEffect('Heal', [Cell(1, 3)])], [
+        ResolveStep('other', false, const [ResolvedEffect(['Heal'], [Cell(1, 3)])], [
           ResolveChange('other', ch('other', 1, 3)),
         ]),
         const ResolveStep('victim', true, [], []),

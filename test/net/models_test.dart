@@ -12,10 +12,11 @@ Map<String, dynamic> face(String d, {int priority = 0}) => {
       'priority': priority,
       'effects': [
         {
-          'effect': 'Damage',
-          'magnitude': 3,
           'targets': [
             {'side': 'ENEMY', 'mode': 'RELATIVE', 'n': [0, 1]}
+          ],
+          'parts': [
+            {'part': 'Damage', 'magnitude': 3}
           ]
         }
       ],
@@ -165,12 +166,12 @@ void main() {
           'skipped': false,
           'effects': [
             {
-              'effect': 'Damage',
+              'parts': ['Damage', 'ApplyState'],
               'targets': [
                 {'playerIndex': 1, 'slot': 0}
               ]
             },
-            {'effect': 'Heal', 'targets': []},
+            {'parts': ['Heal'], 'targets': []},
           ],
           'changes': [
             {'characterId': 'b', 'after': character('b', playerIndex: 1, hp: 7)}
@@ -182,6 +183,7 @@ void main() {
     expect(step.characterId, 'a');
     expect(step.skipped, isFalse);
     expect(step.effects.first.targets.single, const Cell(1, 0));
+    expect(step.effects.first.parts, ['Damage', 'ApplyState']);
     expect(step.effects.last.fizzled, isTrue);
     expect(step.changes.single.after.hp, 7);
     expect(r.gameState.phase, Phase.result);
@@ -363,33 +365,36 @@ void main() {
     expect(without.stats, isEmpty);
   });
 
-  test('FaceEffect parses stat and duration, null when absent', () {
-    final applyStat = FaceEffect.fromJson({
-      'effect': 'ApplyStat',
-      'magnitude': -2,
-      'stat': 'POWER',
-      'duration': 2,
-      'targets': [],
-    });
+  test('FacePart parses stat and duration, null when absent', () {
+    final applyStat = FacePart.fromJson({'part': 'ApplyStat', 'magnitude': -2, 'stat': 'POWER', 'duration': 2});
     expect(applyStat.stat, 'POWER');
     expect(applyStat.duration, 2);
-    final plain = FaceEffect.fromJson({'effect': 'Damage', 'magnitude': 3, 'targets': []});
+    final plain = FacePart.fromJson({'part': 'Damage', 'magnitude': 3});
     expect(plain.stat, isNull);
     expect(plain.duration, isNull);
   });
 
-  test('FaceEffect parses state and keeps duration, null when absent', () {
-    final applyState = FaceEffect.fromJson({
-      'effect': 'ApplyState',
-      'magnitude': 0,
-      'state': 'STUN',
-      'duration': 1,
-      'targets': [],
-    });
+  test('FacePart parses state and keeps duration, null when absent', () {
+    final applyState = FacePart.fromJson({'part': 'ApplyState', 'magnitude': 0, 'state': 'STUN', 'duration': 1});
     expect(applyState.state, 'STUN');
     expect(applyState.duration, 1);
-    final plain = FaceEffect.fromJson({'effect': 'Damage', 'magnitude': 3, 'targets': []});
+    final plain = FacePart.fromJson({'part': 'Damage', 'magnitude': 3});
     expect(plain.state, isNull);
+  });
+
+  test('FaceEffect parses its target groups and its parts, in order', () {
+    final effect = FaceEffect.fromJson({
+      'targets': [
+        {'side': 'ENEMY', 'mode': 'RELATIVE', 'n': [0]}
+      ],
+      'parts': [
+        {'part': 'Damage', 'magnitude': 4},
+        {'part': 'ApplyState', 'magnitude': 0, 'state': 'POISON', 'duration': 2},
+      ],
+    });
+    expect(effect.targets.single.n, [0]);
+    expect(effect.parts.map((p) => p.part), ['Damage', 'ApplyState']);
+    expect(effect.parts.last.state, 'POISON');
   });
 
   test('CharacterView parses states and defaults them to empty', () {
