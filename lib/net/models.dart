@@ -6,6 +6,14 @@ typedef Json = Map<String, dynamic>;
 List<T> _list<T>(Object? raw, T Function(Json) parse) =>
     (raw as List? ?? const []).map((e) => parse(e as Json)).toList(growable: false);
 
+bool _sameList<T>(List<T> a, List<T> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 /// A board cell: which side, which slot.
 class Cell {
   final int playerIndex;
@@ -45,6 +53,12 @@ class TargetGroup {
 
   factory TargetGroup.fromJson(Json j) =>
       TargetGroup(j['side'] as String, j['mode'] as String, List<int>.from(j['n'] as List));
+
+  @override
+  bool operator ==(Object other) =>
+      other is TargetGroup && other.side == side && other.mode == mode && _sameList(other.n, n);
+  @override
+  int get hashCode => Object.hash(side, mode, Object.hashAll(n));
 }
 
 /// One thing an effect does to its cells (Damage, Heal, Swap, ApplyStat...).
@@ -63,6 +77,17 @@ class FacePart {
         state: j['state'] as String?,
         duration: j['duration'] as int?,
       );
+
+  @override
+  bool operator ==(Object other) =>
+      other is FacePart &&
+      other.part == part &&
+      other.magnitude == magnitude &&
+      other.stat == stat &&
+      other.state == state &&
+      other.duration == duration;
+  @override
+  int get hashCode => Object.hash(part, magnitude, stat, state, duration);
 }
 
 /// One step of a face: its target cells and its parts, applied in order on each cell.
@@ -73,6 +98,12 @@ class FaceEffect {
 
   factory FaceEffect.fromJson(Json j) =>
       FaceEffect(_list(j['targets'], TargetGroup.fromJson), _list(j['parts'], FacePart.fromJson));
+
+  @override
+  bool operator ==(Object other) =>
+      other is FaceEffect && _sameList(other.targets, targets) && _sameList(other.parts, parts);
+  @override
+  int get hashCode => Object.hash(Object.hashAll(targets), Object.hashAll(parts));
 }
 
 /// An active buff/debuff instance on a character.
@@ -94,6 +125,12 @@ class DieFace {
 
   factory DieFace.fromJson(Json j) =>
       DieFace(j['description'] as String, j['priority'] as int, _list(j['effects'], FaceEffect.fromJson));
+
+  @override
+  bool operator ==(Object other) =>
+      other is DieFace && other.description == description && other.priority == priority && _sameList(other.effects, effects);
+  @override
+  int get hashCode => Object.hash(description, priority, Object.hashAll(effects));
 }
 
 /// A catalog character (collection screen, team preview decks).

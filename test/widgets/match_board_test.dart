@@ -111,4 +111,64 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('face-m2')));
     expect(tester.takeException(), isNull);
   });
+
+  group('portrait', () {
+    Future<void> openWith(
+      WidgetTester tester, {
+      void Function(CharacterView)? onPortraitTap,
+      void Function(String)? onFaceTap,
+    }) async {
+      tester.view.physicalSize = const Size(2400, 1080);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MatchBoard(
+              players: [PlayerView(0, mine()), PlayerView(1, theirs())],
+              me: 0,
+              onFaceTap: onFaceTap,
+              onPortraitTap: onPortraitTap,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets('CELL-5: tapping a portrait, mine or the opponent\'s, reports its character', (tester) async {
+      final tapped = <CharacterView>[];
+      await openWith(tester, onPortraitTap: tapped.add);
+      await tester.tap(find.byKey(const ValueKey('portrait-m2')));
+      await tester.tap(find.byKey(const ValueKey('portrait-t1')));
+      expect(tapped.map((c) => c.id), ['m2', 't1']);
+      expect(tapped.first.name, 'Name m2');
+    });
+
+    testWidgets('CELL-5: the portrait covers the name, the speed and the HP', (tester) async {
+      await openWith(tester);
+      for (final text in ['Name m0', 'vitesse 3', '20/20']) {
+        expect(
+          find.descendant(of: find.byKey(const ValueKey('portrait-m0')), matching: find.text(text)),
+          findsOneWidget,
+        );
+      }
+    });
+
+    testWidgets('CELL-5: tapping a portrait does not keep its face, tapping a face opens no die view', (tester) async {
+      final portraits = <String>[];
+      final faces = <String>[];
+      await openWith(tester, onPortraitTap: (c) => portraits.add(c.id), onFaceTap: faces.add);
+      await tester.tap(find.byKey(const ValueKey('portrait-m1')));
+      await tester.tap(find.byKey(const ValueKey('face-m3')));
+      expect(portraits, ['m1']);
+      expect(faces, ['m3']);
+    });
+
+    testWidgets('CELL-5: with no handler portraits are not tappable', (tester) async {
+      await openWith(tester);
+      await tester.tap(find.byKey(const ValueKey('portrait-m2')));
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

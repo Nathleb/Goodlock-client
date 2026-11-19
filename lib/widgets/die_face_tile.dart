@@ -13,13 +13,17 @@ const effectColors = {
   'ApplyState': Color(0xFF2EC4B6),
 };
 
-String _chipText(FacePart e) {
+/// The label of a part's chip: the part and its value, the stat or state and its duration.
+String partChipText(FacePart e) {
   if (e.part == 'ApplyStat') {
     return '${e.stat} ${e.magnitude >= 0 ? '+' : ''}${e.magnitude} · ${e.duration} t.';
   }
   if (e.part == 'ApplyState') return '${e.state} · ${e.duration} t.';
   return '${e.part} ${e.part == 'Swap' ? '' : e.magnitude}';
 }
+
+/// The priority bracket of a face, signed: "priorité +1".
+String priorityText(DieFace face) => 'priorité ${face.priority >= 0 ? '+' : ''}${face.priority}';
 
 /// One die face: description, priority bracket, each effect with one chip per part and a mini
 /// targeting grid in the colour of its first part.
@@ -44,7 +48,7 @@ class DieFaceTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(face.description, style: theme.textTheme.titleSmall),
-                  Text('priorité ${face.priority >= 0 ? '+' : ''}${face.priority}', style: theme.textTheme.bodySmall),
+                  Text(priorityText(face), style: theme.textTheme.bodySmall),
                   const SizedBox(height: 6),
                   for (final e in face.effects)
                     Padding(
@@ -54,7 +58,7 @@ class DieFaceTile extends StatelessWidget {
                           for (final part in e.parts) ...[
                             Chip(
                               visualDensity: VisualDensity.compact,
-                              label: Text(_chipText(part)),
+                              label: Text(partChipText(part)),
                               side: BorderSide(color: effectColors[part.part] ?? Colors.white24),
                             ),
                             const SizedBox(width: 8),

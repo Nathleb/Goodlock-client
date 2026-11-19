@@ -17,6 +17,9 @@ class MatchBoard extends StatelessWidget {
 
   /// Called with the id of my character when its face is tapped; null when faces cannot be tapped.
   final void Function(String characterId)? onFaceTap;
+
+  /// Called with the character whose portrait is tapped, on either side (CELL-5); null when portraits cannot be tapped.
+  final void Function(CharacterView character)? onPortraitTap;
   final Widget? center;
   const MatchBoard({
     super.key,
@@ -24,6 +27,7 @@ class MatchBoard extends StatelessWidget {
     required this.me,
     this.locks = const {},
     this.onFaceTap,
+    this.onPortraitTap,
     this.center,
   });
 
@@ -56,6 +60,7 @@ class MatchBoard extends StatelessWidget {
                       mine: mine,
                       locked: mine && locks.contains(bySlot[slot]!.id),
                       onFaceTap: mine && onFaceTap != null ? () => onFaceTap!(bySlot[slot]!.id) : null,
+                      onPortraitTap: onPortraitTap == null ? null : () => onPortraitTap!(bySlot[slot]!),
                     ),
             ),
           ),

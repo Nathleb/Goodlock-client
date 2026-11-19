@@ -16,48 +16,63 @@ class CellTile extends StatelessWidget {
 
   /// CELL-5: tapping my face keeps or releases it. Null: not tappable (never for the opponent's).
   final VoidCallback? onFaceTap;
-  const CellTile({super.key, required this.character, required this.mine, this.locked = false, this.onFaceTap});
+
+  /// CELL-5: tapping the portrait (name, speed, HP, statuses) opens the die view, on either side. Null: not tappable.
+  final VoidCallback? onPortraitTap;
+  const CellTile({
+    super.key,
+    required this.character,
+    required this.mine,
+    this.locked = false,
+    this.onFaceTap,
+    this.onPortraitTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final portrait = Expanded(
       flex: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: mine ? Alignment.centerLeft : Alignment.centerRight,
-          child: SizedBox(
-            width: 150,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: mine ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-              children: [
-                Text(character.name, style: theme.textTheme.titleSmall, overflow: TextOverflow.ellipsis),
-                Text('vitesse ${character.baseSpeed}', style: theme.textTheme.labelSmall),
-                const SizedBox(height: 2),
-                Container(
-                  key: ValueKey('hp-${character.id}'),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      LinearProgressIndicator(
-                        value: character.maxHp == 0 ? 0 : (character.hp / character.maxHp).clamp(0.0, 1.0),
-                        minHeight: 6,
-                        color: Colors.lightGreenAccent,
-                        backgroundColor: Colors.white12,
-                      ),
-                      Text(
-                        '${character.hp}/${character.maxHp}',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.labelSmall,
-                      ),
-                    ],
+      child: InkWell(
+        key: ValueKey('portrait-${character.id}'),
+        borderRadius: BorderRadius.circular(10),
+        onTap: onPortraitTap,
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: mine ? Alignment.centerLeft : Alignment.centerRight,
+            child: SizedBox(
+              width: 150,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: mine ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                children: [
+                  Text(character.name, style: theme.textTheme.titleSmall, overflow: TextOverflow.ellipsis),
+                  Text('vitesse ${character.baseSpeed}', style: theme.textTheme.labelSmall),
+                  const SizedBox(height: 2),
+                  Container(
+                    key: ValueKey('hp-${character.id}'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        LinearProgressIndicator(
+                          value: character.maxHp == 0 ? 0 : (character.hp / character.maxHp).clamp(0.0, 1.0),
+                          minHeight: 6,
+                          color: Colors.lightGreenAccent,
+                          backgroundColor: Colors.white12,
+                        ),
+                        Text(
+                          '${character.hp}/${character.maxHp}',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.labelSmall,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                StatusChips(character: character),
-              ],
+                  StatusChips(character: character),
+                ],
+              ),
             ),
           ),
         ),
