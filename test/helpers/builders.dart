@@ -49,6 +49,7 @@ GameStateView stateOf(
   List<CharacterView> theirs = const [],
   SelectionView? selection,
   List<PlayerClock>? clocks,
+  List<ResolveStep> preview = const [],
 }) =>
     GameStateView(
       phase: phase,
@@ -59,6 +60,7 @@ GameStateView stateOf(
       clocks: clocks ?? clocksOf(),
       players: [PlayerView(0, mine), PlayerView(1, theirs)],
       selection: selection,
+      preview: preview,
     );
 
 SelectionView selectionView({List<String>? myPicks}) => SelectionView([deckOf('a'), deckOf('b')], myPicks);

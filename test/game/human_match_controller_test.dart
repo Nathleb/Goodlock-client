@@ -234,6 +234,67 @@ void main() {
     });
   });
 
+  group('UX-1, FLOW-3, TL-6: the timeline of the Keep', () {
+    ResolveStep act(String actor) => ResolveStep(actor, false, const [], const []);
+    GameStateView keepWith(List<String> order, {int rollsLeft = 2, bool ready = false, List<String> locked = const []}) =>
+        stateOf(
+          Phase.keep,
+          rollsLeft: rollsLeft,
+          myReady: ready,
+          mine: myTeam(locked: locked),
+          theirs: theirTeam(),
+          preview: [for (final id in order) act(id)],
+        );
+
+    test('UX-1: is the preview of the round, from the board of the Keep', () {
+      link.server(keepWith(['t1', 'm0', 'm3']));
+
+      final timeline = c.keepTimeline!;
+      expect(timeline.tokens.map((t) => t.characterId), ['t1', 'm0', 'm3']);
+      expect(timeline.boards.first.map((ch) => ch.id), ['m0', 'm1', 'm2', 'm3', 't0', 't1', 't2', 't3']);
+    });
+
+    test('FLOW-3: keeping or releasing a die, or the echo of Confirm, keeps the same timeline', () {
+      link.server(keepWith(['m0']));
+      final first = c.keepTimeline;
+      c.toggleLock('m1');
+      expect(c.keepTimeline, same(first));
+      link.server(keepWith(['m0'], ready: true, locked: ['m1']));
+      expect(c.keepTimeline, same(first));
+    });
+
+    test('TL-6: a new Roll gives a new timeline, from its own preview', () {
+      link.server(keepWith(['m0']));
+      final first = c.keepTimeline;
+      link.server(keepWith(['t2', 'm0'], rollsLeft: 1));
+      expect(c.keepTimeline, isNot(same(first)));
+      expect(c.keepTimeline!.tokens.map((t) => t.characterId), ['t2', 'm0']);
+    });
+
+    test('there is none outside the Keep, nor for a Keep with no character', () {
+      link.server(selectionState());
+      expect(c.keepTimeline, isNull);
+      link.server(stateOf(Phase.keep));
+      expect(c.keepTimeline, isNull);
+      link.server(keepWith(['m0']));
+      link.server(stateOf(Phase.roll, mine: myTeam(), theirs: theirTeam()));
+      expect(c.keepTimeline, isNull);
+    });
+  });
+
+  test('FLOW-4: a round to play carries the number of the round it resolves', () {
+    final start = GameStateView(
+      phase: Phase.resolve,
+      currentRound: 3,
+      initiativePlayerIndex: 0,
+      rollsLeft: 0,
+      players: [PlayerView(0, myTeam()), PlayerView(1, theirTeam())],
+    );
+    link.server(keepState(round: 4)); // the next round's Keep may already be there
+    link.serverResolved(RoundResolved(stateOf(Phase.result, mine: myTeam(), theirs: theirTeam()), const [], start));
+    expect(c.nextRound()!.round, 3);
+  });
+
   test('CLOCK-4: the clocks follow the states with the time given', () {
     var now = DateTime(2026);
     c = HumanMatchController(link, me: 0, now: () => now);

@@ -4,11 +4,19 @@ import '../game/human_match_controller.dart';
 import '../net/models.dart';
 import 'match_clocks_bar.dart';
 
-/// The status bar of the decision screens (LAYOUT-2): the phase and the round, who holds the initiative,
-/// both clocks, concede, and the Confirm button, which reads Cancel once confirmed (GAME-8).
+/// The status bar of the match screens (LAYOUT-2): the phase and the round, who holds the initiative, the
+/// caption of the step on display (STEP-5), both clocks, concede, and the Confirm button, which reads Cancel
+/// once confirmed (GAME-8). During Resolve there is nothing to confirm: no button.
 class MatchBar extends StatelessWidget {
   final HumanMatchController controller;
-  const MatchBar({super.key, required this.controller});
+
+  /// The step on display, in one or two lines between the title and the clocks; null: no caption.
+  final String? caption;
+
+  /// Replaces the title of the phase, e.g. during Resolve, when the controller may already hold the next Keep.
+  final String? phaseLabel;
+  final bool resolving;
+  const MatchBar({super.key, required this.controller, this.caption, this.phaseLabel, this.resolving = false});
 
   String _title(GameStateView? s) => switch (s?.phase) {
     Phase.selection => 'Choix de l\'équipe',
@@ -28,7 +36,7 @@ class MatchBar extends StatelessWidget {
         child: Row(
           children: [
             const BackButton(),
-            Text(_title(s), style: theme.textTheme.titleSmall),
+            Text(phaseLabel ?? _title(s), style: theme.textTheme.titleSmall),
             if (s != null)
               Tooltip(
                 message: s.initiativePlayerIndex == controller.me ? 'Initiative : toi' : 'Initiative : adversaire',
@@ -41,10 +49,25 @@ class MatchBar extends StatelessWidget {
                   ),
                 ),
               ),
+            if (caption != null)
+              Expanded(
+                flex: 3,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    caption!,
+                    key: const ValueKey('step-caption'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
             Expanded(
+              flex: 2,
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: SizedBox(width: 640, child: MatchClocksBar(clocks: controller.clocks)),
+                child: SizedBox(width: caption == null ? 640 : 440, child: MatchClocksBar(clocks: controller.clocks)),
               ),
             ),
             IconButton(
@@ -53,7 +76,9 @@ class MatchBar extends StatelessWidget {
               onPressed: () => _confirmConcede(context),
             ),
             const SizedBox(width: 4),
-            if (controller.canCancel)
+            if (resolving)
+              const SizedBox.shrink()
+            else if (controller.canCancel)
               OutlinedButton(key: const ValueKey('cancel'), onPressed: controller.cancel, child: const Text('Annuler'))
             else
               FilledButton(
