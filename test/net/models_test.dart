@@ -409,4 +409,35 @@ void main() {
 
     expect(CharacterView.fromJson(character('a')).states, isEmpty);
   });
+
+  group('the round preview of the Keep state', () {
+    Json recordedKeepBoard() =>
+        (jsonDecode(File('test/fixtures/round_start.json').readAsStringSync()) as List).first as Json;
+    Json recordedStep() =>
+        ((jsonDecode(File('test/fixtures/round_resolved.json').readAsStringSync()) as List).first
+            as Json)['resolveLog'][0] as Json;
+
+    test('a KEEP state with a preview parses to its steps, in order', () {
+      final step = recordedStep();
+      final skipped = {...step, 'skipped': true, 'effects': <Object>[], 'changes': <Object>[]};
+      final keep = {...recordedKeepBoard(), 'preview': [step, skipped]};
+
+      expectValid('GameStateDTO', keep);
+      final gs = GameStateView.fromJson(keep);
+      expect(gs.preview, hasLength(2));
+      expect(gs.preview.first.characterId, step['characterId']);
+      expect(gs.preview.first.skipped, isFalse);
+      expect(gs.preview.first.effects, hasLength((step['effects'] as List).length));
+      expect(gs.preview.first.changes, hasLength((step['changes'] as List).length));
+      expect(gs.preview.last.skipped, isTrue);
+    });
+
+    test('a state without a preview parses to an empty one', () {
+      final board = recordedKeepBoard();
+
+      expect(board.containsKey('preview'), isFalse);
+      expectValid('GameStateDTO', board);
+      expect(GameStateView.fromJson(board).preview, isEmpty);
+    });
+  });
 }

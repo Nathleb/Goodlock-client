@@ -257,6 +257,9 @@ class GameStateView {
   final List<PlayerView> players;
   final SelectionView? selection;
 
+  /// KEEP only: the log the round would give if every current face were final. Empty in other phases.
+  final List<ResolveStep> preview;
+
   const GameStateView({
     required this.phase,
     required this.currentRound,
@@ -266,6 +269,7 @@ class GameStateView {
     this.clocks = const [],
     required this.players,
     this.selection,
+    this.preview = const [],
   });
 
   factory GameStateView.fromJson(Json j) => GameStateView(
@@ -277,6 +281,7 @@ class GameStateView {
         clocks: _list(j['clocks'], PlayerClock.fromJson),
         players: _list(j['players'], PlayerView.fromJson),
         selection: j['selection'] == null ? null : SelectionView.fromJson(j['selection'] as Json),
+        preview: _list(j['preview'], ResolveStep.fromJson),
       );
 }
 

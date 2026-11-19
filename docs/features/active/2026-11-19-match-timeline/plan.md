@@ -1,6 +1,6 @@
 # Plan: match timeline
 
-- [ ] 1. Model: `GameStateView.preview`; schema synced; fixtures validated.
+- [x] 1. Model: `GameStateView.preview`; schema synced; fixtures validated.
 - [ ] 2. `RoundTimeline`: board per notch, token status (TL-1, TL-3, TL-4).
 - [ ] 3. Step outcome: per-cell result and one-line caption (STEP-2..5).
 - [ ] 4. `Playhead`: play, pause, fast forward, seek, reset (TL-6, FLOW-4..6).
