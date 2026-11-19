@@ -69,3 +69,16 @@ TokenStatus _status(ResolveStep step, DieFace face, {required bool isDead}) {
   if (step.skipped) return isDead ? TokenStatus.dead : TokenStatus.stunned;
   return face.effects.isEmpty ? TokenStatus.blank : TokenStatus.plays;
 }
+
+/// The two players of a timeline board, as the board widget takes them, indexed by player: each team holds the
+/// characters still alive, ordered by slot. A character with no HP left has left its cell (CELL-6, DEAD-1).
+List<PlayerView> playersFromBoard(List<CharacterView> board) => [
+  for (final player in [0, 1])
+    PlayerView(
+      player,
+      [
+        for (final c in board)
+          if (c.position.playerIndex == player && !c.isDead) c,
+      ]..sort((a, b) => a.position.slot.compareTo(b.position.slot)),
+    ),
+];

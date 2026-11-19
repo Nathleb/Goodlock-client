@@ -19,6 +19,9 @@ class CellTile extends StatelessWidget {
 
   /// CELL-5: tapping the portrait (name, speed, HP, statuses) opens the die view, on either side. Null: not tappable.
   final VoidCallback? onPortraitTap;
+
+  /// CELL-3: the HP the character had when the round started. The bar marks what was lost since; null: nothing marked.
+  final int? roundStartHp;
   const CellTile({
     super.key,
     required this.character,
@@ -26,6 +29,7 @@ class CellTile extends StatelessWidget {
     this.locked = false,
     this.onFaceTap,
     this.onPortraitTap,
+    this.roundStartHp,
   });
 
   @override
@@ -56,12 +60,7 @@ class CellTile extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        LinearProgressIndicator(
-                          value: character.maxHp == 0 ? 0 : (character.hp / character.maxHp).clamp(0.0, 1.0),
-                          minHeight: 6,
-                          color: Colors.lightGreenAccent,
-                          backgroundColor: Colors.white12,
-                        ),
+                        _hpBar(),
                         Text(
                           '${character.hp}/${character.maxHp}',
                           textAlign: TextAlign.center,
@@ -85,6 +84,34 @@ class CellTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(children: mine ? [portrait, face] : [face, portrait]),
+    );
+  }
+
+  /// The HP on display, then the HP lost since the round started (CELL-3), up to the max HP.
+  Widget _hpBar() {
+    final max = character.maxHp;
+    final bar = LinearProgressIndicator(
+      value: max == 0 ? 0 : (character.hp / max).clamp(0.0, 1.0),
+      minHeight: 6,
+      color: Colors.lightGreenAccent,
+      backgroundColor: Colors.white12,
+    );
+    final hp = character.hp.clamp(0, max);
+    final start = (roundStartHp ?? hp).clamp(0, max);
+    if (start <= hp) return bar;
+    return LayoutBuilder(
+      builder: (context, box) => Stack(
+        children: [
+          bar,
+          Positioned(
+            left: box.maxWidth * hp / max,
+            width: box.maxWidth * (start - hp) / max,
+            top: 0,
+            bottom: 0,
+            child: ColoredBox(key: ValueKey('hp-lost-${character.id}'), color: const Color(0xFFB3261E)),
+          ),
+        ],
+      ),
     );
   }
 
