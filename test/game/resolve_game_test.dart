@@ -71,10 +71,10 @@ void main() {
       final game = await pumpGame(tester);
       final before = [ch('killer', 0, 1), ch('victim', 1, 1, hp: 3), ch('other', 1, 3)];
       final log = [
-        ResolveStep('killer', false, const [ResolvedEffect('Damage', [Cell(1, 1)])], [
+        ResolveStep('killer', false, const [ResolvedEffect(['Damage'], [Cell(1, 1)])], [
           ResolveChange('victim', ch('victim', 1, 1, hp: 0)),
         ]),
-        ResolveStep('other', false, const [ResolvedEffect('Heal', [Cell(1, 3)])], [
+        ResolveStep('other', false, const [ResolvedEffect(['Heal'], [Cell(1, 3)])], [
           ResolveChange('other', ch('other', 1, 3)),
         ]),
         const ResolveStep('victim', true, [], []),

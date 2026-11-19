@@ -5,7 +5,7 @@ a face effect is `{ targets, parts: [{ part, magnitude, stat?, state?, duration?
 effect is `{ parts, targets }`. No UI decision: the display stays as it is, one chip or glyph per part.
 Merge the backend PR first.
 
-- [ ] 1. **Protocol models.** Sync the schema, convert the recorded fixtures to the new shape, then
+- [x] 1. **Protocol models.** Sync the schema, convert the recorded fixtures to the new shape, then
   `FacePart`, `FaceEffect { targets, parts }` and `ResolvedEffect { parts, targets }` in
   `lib/net/models.dart`. Tests first: the hand-written payloads of `test/net/models_test.dart` in the
   new shape, validated against the schema; a two-part effect parses with its parts in order.

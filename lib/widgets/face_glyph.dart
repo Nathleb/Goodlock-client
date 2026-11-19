@@ -7,8 +7,8 @@ import 'die_face_tile.dart';
 /// stat change, "◆" for a state), "·" for a blank face.
 String faceGlyphText(DieFace face) {
   if (face.effects.isEmpty) return '·';
-  final e = face.effects.first;
-  return switch (e.effect) {
+  final e = face.effects.first.parts.first;
+  return switch (e.part) {
     'Swap' => 'S',
     'ApplyStat' => e.magnitude >= 0 ? '+' : '−',
     'ApplyState' => '◆',
@@ -25,7 +25,7 @@ class FaceGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = face.effects.isEmpty ? Colors.white24 : (effectColors[face.effects.first.effect] ?? Colors.white54);
+    final color = face.effects.isEmpty ? Colors.white24 : (effectColors[face.effects.first.parts.first.part] ?? Colors.white54);
     return Container(
       width: size,
       height: size,

@@ -113,7 +113,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
   Future<void> _playStep(StepPlan step) async {
     final actor = _tokens[step.actorId];
     if (actor == null) return;
-    final labels = step.effects.map((e) => e.effect).toSet().join(' + ');
+    final labels = step.effects.map((e) => e.parts.first).toSet().join(' + ');
     caption.value = step.skipped ? '${actor.character.name} ne peut pas agir' : '${actor.character.name} — $labels';
 
     if (step.skipped) {
@@ -126,7 +126,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
     await _fx(actor, ScaleEffect.to(Vector2.all(1.12), EffectController(duration: 0.12, curve: Curves.easeOut)));
 
     // Only 'Damage' is hostile: FixedDamage is a cost paid, so no lunge.
-    final hostile = step.effects.any((e) => e.effect == 'Damage' && !e.fizzled);
+    final hostile = step.effects.any((e) => e.parts.first == 'Damage' && !e.fizzled);
     // Lunge toward the opposing column.
     final towardFoe = actor.isMine ? 1.0 : -1.0;
     if (hostile) {
@@ -136,7 +136,7 @@ class ResolveGame extends FlameGame with HasTimeScale {
     // Impact rings on every resolved cell.
     for (final e in step.effects) {
       for (final cell in e.targets) {
-        _ring(cellCenter(cell), _effectColors[e.effect] ?? const Color(0xFFFFFFFF));
+        _ring(cellCenter(cell), _effectColors[e.parts.first] ?? const Color(0xFFFFFFFF));
       }
     }
 
