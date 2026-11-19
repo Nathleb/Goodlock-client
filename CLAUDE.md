@@ -45,6 +45,7 @@ flutter test
 dart run tool/bot_match.dart --server http://localhost:3000   # two bots play a full match (backend must run)
 tool/sync_protocol.sh                                       # copy the backend protocol schema into test/protocol/
 flutter build apk --debug                                   # build/app/outputs/flutter-apk/app-debug.apk
+flutter run -d web-server --web-port 8080                   # dev shortcut only (mobile is the target), http://localhost:8080
 ```
 
 Flutter SDK: `~/development/flutter` (on `PATH` via `~/.zshrc`). Android SDK: `~/Android/Sdk`.
