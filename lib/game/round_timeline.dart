@@ -24,7 +24,10 @@ class TimelineToken {
 class RoundTimeline {
   final List<TimelineToken> tokens;
   final List<List<CharacterView>> boards;
-  const RoundTimeline._(this.tokens, this.boards);
+
+  /// The log the timeline was built from: `steps[i]` is the action of `tokens[i]`.
+  final List<ResolveStep> steps;
+  const RoundTimeline._(this.tokens, this.boards, this.steps);
 
   factory RoundTimeline.build(List<CharacterView> start, List<ResolveStep> log) {
     final atStart = {for (final c in start) c.id: c};
@@ -50,7 +53,7 @@ class RoundTimeline {
       boards.add(List.unmodifiable([for (final c in start) state[c.id]!]));
     }
     boards.add(List.unmodifiable(startOfNextRound(boards.last)));
-    return RoundTimeline._(List.unmodifiable(tokens), List.unmodifiable(boards));
+    return RoundTimeline._(List.unmodifiable(tokens), List.unmodifiable(boards), List.unmodifiable(log));
   }
 
   int get notchCount => boards.length;
