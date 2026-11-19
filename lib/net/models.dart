@@ -347,12 +347,21 @@ class ResolveStep {
 }
 
 class RoundResolved {
+  /// The board once the round has resolved.
   final GameStateView gameState;
   final List<ResolveStep> resolveLog;
-  const RoundResolved(this.gameState, this.resolveLog);
 
-  factory RoundResolved.fromJson(Json j) =>
-      RoundResolved(GameStateView.fromJson(j['gameState'] as Json), _list(j['resolveLog'], ResolveStep.fromJson));
+  /// The board when Resolve starts, with the faces [resolveLog] plays: the last reroll of the Keep is sent
+  /// nowhere else.
+  final GameStateView startOfResolve;
+
+  const RoundResolved(this.gameState, this.resolveLog, this.startOfResolve);
+
+  factory RoundResolved.fromJson(Json j) => RoundResolved(
+        GameStateView.fromJson(j['gameState'] as Json),
+        _list(j['resolveLog'], ResolveStep.fromJson),
+        GameStateView.fromJson(j['startOfResolve'] as Json),
+      );
 }
 
 /// Why a match ended (END-3).

@@ -1,6 +1,7 @@
 # Plan: match timeline
 
 - [x] 1. Model: `GameStateView.preview`; schema synced; fixtures validated.
+- [x] 1b. `RoundResolved.startOfResolve`: the faces actually resolved (the Resolve timeline starts from it, not from the last Keep board).
 - [x] 2. `RoundTimeline`: board per notch, token status (TL-1, TL-3, TL-4).
 - [x] 3. Step outcome: per-cell result and one-line caption (STEP-2..5).
 - [ ] 4. `Playhead`: play, pause, fast forward, seek, reset (TL-6, FLOW-4..6).

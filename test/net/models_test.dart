@@ -160,6 +160,31 @@ void main() {
           {'playerIndex': 1, 'team': [character('b', playerIndex: 1, hp: 7)]},
         ],
       },
+      'startOfResolve': {
+        'phase': 'RESOLVE_PHASE',
+        'currentRound': 1,
+        'initiativePlayerIndex': 0,
+        'rollsLeft': 0,
+        'clocks': [
+          {'remainingMs': 600000, 'reconnectionMs': 180000, 'running': false, 'connected': true},
+          {'remainingMs': 600000, 'reconnectionMs': 180000, 'running': false, 'connected': true},
+        ],
+        'players': [
+          for (final (i, id) in [(0, 'a'), (1, 'b')])
+            {
+              'playerIndex': i,
+              'team': [
+                {
+                  ...character(id, playerIndex: i),
+                  'modifiers': <Object>[],
+                  'stats': {'POWER': 0, 'ARMOR': 0},
+                  'states': {'SPEED': 0, 'VITALITY': 0, 'STUN': 0, 'ROOT': 0, 'DIVINE_SHIELD': 0},
+                }
+              ],
+              'fallen': <Object>[],
+            },
+        ],
+      },
       'resolveLog': [
         {
           'characterId': 'a',
@@ -347,6 +372,26 @@ void main() {
     }
   });
 
+  test('RoundResolved parses startOfResolve, the board with the faces Resolve played', () {
+    final raw = jsonDecode(File('test/fixtures/round_resolved.json').readAsStringSync()) as List;
+    expect(raw, isNotEmpty);
+    for (final j in raw) {
+      final json = j as Json;
+      final r = RoundResolved.fromJson(json);
+      final start = json['startOfResolve'] as Json;
+      expect(r.startOfResolve.phase, Phase.resolve);
+      expect(r.startOfResolve.currentRound, r.gameState.currentRound);
+      final faces = {
+        for (final p in start['players'] as List)
+          for (final c in (p as Json)['team'] as List) (c as Json)['id']: (c['face'] as Json)['description'],
+      };
+      final parsed = r.startOfResolve.players.expand((p) => p.team);
+      expect({for (final c in parsed) c.id: c.face.description}, faces);
+      // Every acting character of the log stands on the start board.
+      expect(r.resolveLog.map((s) => s.characterId).toSet().difference(faces.keys.toSet()), isEmpty);
+    }
+  });
+
   test('CharacterView parses modifiers and stats and defaults them to empty', () {
     final withStats = CharacterView.fromJson({
       ...character('a'),
@@ -433,7 +478,7 @@ void main() {
     });
 
     test('a state without a preview parses to an empty one', () {
-      final board = recordedKeepBoard();
+      final board = {...recordedKeepBoard()}..remove('preview');
 
       expect(board.containsKey('preview'), isFalse);
       expectValid('GameStateDTO', board);

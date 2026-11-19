@@ -167,7 +167,8 @@ void main() {
   });
 
   group('FLOW-4, FLOW-6: Resolve and the end of the match', () {
-    RoundResolved resolvedRound() => RoundResolved(stateOf(Phase.resolve, mine: myTeam(), theirs: theirTeam()), const []);
+    RoundResolved resolvedRound() => RoundResolved(stateOf(Phase.resolve, mine: myTeam(), theirs: theirTeam()), const [],
+        stateOf(Phase.resolve, mine: myTeam(), theirs: theirTeam()));
 
     test('hands over the round to play with the Keep board as its start', () {
       link.server(keepState());
@@ -180,6 +181,35 @@ void main() {
       expect(c.isResolving, isTrue); // still playing
       c.roundPlayed();
       expect(c.isResolving, isFalse);
+    });
+
+    test('starts the round from the board Resolve started from, with the faces played, and not the fallen', () {
+      const rerolled = DieFace('rerolled', 1, []);
+      link.server(keepState());
+      final resolveStart = GameStateView(
+        phase: Phase.resolve,
+        currentRound: 0,
+        initiativePlayerIndex: 0,
+        rollsLeft: 0,
+        clocks: clocksOf(),
+        players: [
+          PlayerView(0, [for (var i = 0; i < 3; i++) character('m$i', side: 0, slot: i, face: rerolled, locked: true)],
+              [character('m3', side: 0, slot: 3, hp: 0)]),
+          PlayerView(1, theirTeam()),
+        ],
+      );
+      link.serverResolved(
+          RoundResolved(stateOf(Phase.result, mine: myTeam(), theirs: theirTeam()), const [], resolveStart));
+
+      final round = c.nextRound()!;
+      expect(round.start.map((e) => e.id), ['m0', 'm1', 'm2', 't0', 't1', 't2', 't3']);
+      expect(round.start.where((e) => e.position.playerIndex == 0).map((e) => e.face.description),
+          everyElement('rerolled'));
+    });
+
+    test('plays a round even when no Keep board came before it', () {
+      link.serverResolved(resolvedRound());
+      expect(c.nextRound()!.start, hasLength(8));
     });
 
     test('shows the result only once the rounds are played', () {

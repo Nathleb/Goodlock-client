@@ -111,10 +111,11 @@ class HumanMatchController extends ChangeNotifier {
   }
 
   void _onResolved(RoundResolved r) {
-    // The state just before this event is this round's Keep board, with its shields still in place.
-    final start = state?.players.expand((p) => p.team).toList() ?? const <CharacterView>[];
+    // The board Resolve started from: the faces the log plays (the last reroll of the Keep comes only here),
+    // the shields still in place; the fallen are off the board.
+    final start = r.startOfResolve.players.expand((p) => p.team).toList();
     clocks.onState(r.gameState, now());
-    if (start.isNotEmpty) _rounds.add(PlayableRound(start, r.resolveLog));
+    _rounds.add(PlayableRound(start, r.resolveLog));
     notifyListeners();
   }
 
