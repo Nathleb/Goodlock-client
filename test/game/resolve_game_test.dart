@@ -29,6 +29,20 @@ Future<ResolveGame> pumpGame(WidgetTester tester, {int viewerIndex = 0}) async {
 }
 
 void main() {
+  test('the caption of an action lists the parts of its effects, each once, in order', () {
+    const effects = [
+      ResolvedEffect(['Damage', 'ApplyState'], [Cell(1, 0)]),
+      ResolvedEffect(['Heal', 'Damage'], [Cell(0, 0)]),
+    ];
+    expect(actionLabels(effects), 'Damage + ApplyState + Heal');
+  });
+
+  test('an action is hostile when one of its effects has a Damage part that reached a cell', () {
+    expect(isHostileAction(const [ResolvedEffect(['Shield', 'Damage'], [Cell(1, 0)])]), isTrue);
+    expect(isHostileAction(const [ResolvedEffect(['Damage'], [])]), isFalse);
+    expect(isHostileAction(const [ResolvedEffect(['FixedDamage', 'Heal'], [Cell(0, 0)])]), isFalse);
+  });
+
   testWidgets('plays every recorded round to the end without errors', (
     tester,
   ) async {

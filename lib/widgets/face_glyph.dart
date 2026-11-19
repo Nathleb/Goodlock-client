@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../net/models.dart';
 import 'die_face_tile.dart';
 
-/// What a face does, in a few characters: its first effect and value ("5", "S" for a Swap, "+" for a
+/// What a face does, in a few characters: the first part of its first effect and its value ("5", "S" for a Swap, "+" for a
 /// stat change, "◆" for a state), "·" for a blank face.
 String faceGlyphText(DieFace face) {
   if (face.effects.isEmpty) return '·';
@@ -16,7 +16,7 @@ String faceGlyphText(DieFace face) {
   };
 }
 
-/// A face as a small coloured square: the colour of its first effect, its value inside.
+/// A face as a small coloured square: the colour of its first part, its value inside.
 class FaceGlyph extends StatelessWidget {
   final DieFace face;
   final double size;
