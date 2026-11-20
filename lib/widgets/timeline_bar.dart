@@ -13,7 +13,10 @@ const theirTeamColor = Color(0xFFE76F51);
 /// The bottom band of the match screen (LAYOUT-1): play/pause and fast forward, then the round as a row of
 /// tokens in resolution order (TL-1), with the playhead on its notch (TL-4). Tapping a token or dragging along
 /// the track moves the playhead (TL-6); when the order changes, the tokens slide to their new rank (TL-2).
-class TimelineBar extends StatelessWidget {
+///
+/// The tokens shrink to fit the width, down to a touch target; past that, the row scrolls and follows the playhead.
+/// A playhead loaded with another notch count than [timeline] is drawn clamped to the timeline's notches.
+class TimelineBar extends StatefulWidget {
   final RoundTimeline timeline;
   final Playhead playhead;
 
@@ -22,33 +25,53 @@ class TimelineBar extends StatelessWidget {
   const TimelineBar({super.key, required this.timeline, required this.playhead, required this.me});
 
   static const height = 68.0;
+
+  @override
+  State<TimelineBar> createState() => _TimelineBarState();
+}
+
+class _TimelineBarState extends State<TimelineBar> {
   static const _maxSlot = 52.0;
+
+  /// The narrowest slot: a token stays a touch target.
+  static const _minSlot = 44.0;
+
+  /// Room for the playhead before the first token and after the last one.
+  static const _pad = 10.0;
   static const _slide = Duration(milliseconds: 300);
+
+  final _scroll = ScrollController();
+  final _rowKey = GlobalKey();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final playhead = widget.playhead;
     return ListenableBuilder(
       listenable: playhead,
       builder: (context, _) => SizedBox(
-        height: height,
+        height: TimelineBar.height,
         child: Row(
           children: [
             IconButton(
               key: const ValueKey('timeline-play'),
+              tooltip: playhead.playing ? 'Pause' : 'Lecture',
               icon: Icon(playhead.playing ? Icons.pause : Icons.play_arrow),
               onPressed: playhead.togglePlay,
             ),
             IconButton(
               key: const ValueKey('timeline-fast-forward'),
+              tooltip: 'Fin du round',
               icon: const Icon(Icons.fast_forward),
               onPressed: playhead.fastForward,
             ),
             Expanded(
-              child: Padding(
-                // Room for the playhead before the first token and after the last one.
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: LayoutBuilder(builder: (context, constraints) => _track(constraints.maxWidth)),
-              ),
+              child: LayoutBuilder(builder: (context, constraints) => _track(constraints.maxWidth - 2 * _pad)),
             ),
           ],
         ),
@@ -57,23 +80,31 @@ class TimelineBar extends StatelessWidget {
   }
 
   Widget _track(double width) {
+    final timeline = widget.timeline;
+    final playhead = widget.playhead;
     final tokens = timeline.tokens;
-    final slot = tokens.isEmpty ? _maxSlot : min(_maxSlot, width / tokens.length);
+    final fit = tokens.isEmpty ? _maxSlot : min(_maxSlot, width / tokens.length);
+    final scrolls = fit < _minSlot;
+    final slot = scrolls ? _minSlot : fit;
     final length = slot * tokens.length;
     final names = {for (final c in timeline.boards.first) c.id: c.name};
     final notch = playhead.notch.clamp(0, timeline.notchCount - 1);
     final current = timeline.stepAt(notch);
     final playheadX = notch / (timeline.notchCount - 1) * length;
-    void seekAt(double dx) {
-      if (length > 0) playhead.seek(dx / length);
+    // From the global position: a drag's local position keeps the offset of the row when it started, and the row
+    // may have scrolled since.
+    void seekAt(Offset global) {
+      final box = _rowKey.currentContext?.findRenderObject() as RenderBox?;
+      if (box != null && length > 0) playhead.seek(box.globalToLocal(global).dx / length);
     }
 
-    return GestureDetector(
+    final track = GestureDetector(
       key: const ValueKey('timeline-track'),
       behavior: HitTestBehavior.opaque,
-      onHorizontalDragStart: (d) => seekAt(d.localPosition.dx),
-      onHorizontalDragUpdate: (d) => seekAt(d.localPosition.dx),
+      onHorizontalDragStart: (d) => seekAt(d.globalPosition),
+      onHorizontalDragUpdate: (d) => seekAt(d.globalPosition),
       child: Stack(
+        key: _rowKey,
         clipBehavior: Clip.none,
         children: [
           for (var i = 0; i < tokens.length; i++)
@@ -89,7 +120,7 @@ class TimelineBar extends StatelessWidget {
                 child: _Token(
                   token: tokens[i],
                   name: names[tokens[i].characterId] ?? '',
-                  team: tokens[i].team == me ? myTeamColor : theirTeamColor,
+                  team: tokens[i].team == widget.me ? myTeamColor : theirTeamColor,
                   played: i < notch - 1,
                   current: i == current,
                   onTap: () => playhead.seekToNotch(i + 1),
@@ -107,6 +138,33 @@ class TimelineBar extends StatelessWidget {
         ],
       ),
     );
+    if (!scrolls) return Padding(padding: const EdgeInsets.symmetric(horizontal: _pad), child: track);
+    _follow(playheadX + _pad);
+    return SingleChildScrollView(
+      key: const ValueKey('timeline-scroll'),
+      controller: _scroll,
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: _pad),
+      child: SizedBox(width: length, child: track),
+    );
+  }
+
+  /// Once the frame is laid out, scrolls the row just enough to keep the playhead ([x], in the scrolled content)
+  /// one slot inside the view. Dragging to an edge of the view thus scrolls the row along.
+  void _follow(double x) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      final position = _scroll.position;
+      final view = position.viewportDimension;
+      final offset = position.pixels;
+      final target = x < offset + _minSlot
+          ? x - _minSlot
+          : x > offset + view - _minSlot
+          ? x - view + _minSlot
+          : offset;
+      final clamped = target.clamp(0.0, position.maxScrollExtent);
+      if (clamped != offset) _scroll.jumpTo(clamped);
+    });
   }
 }
 
@@ -127,81 +185,102 @@ class _Token extends StatelessWidget {
     required this.onTap,
   });
 
+  /// What a screen reader says (F20): the character, its face, and the state of its action.
+  String get _label {
+    final face = token.face;
+    final faceText = face.description.isNotEmpty
+        ? face.description
+        : (face.effects.isEmpty ? 'face vide' : 'valeur ${faceGlyphText(face)}');
+    final why = switch (token.status) {
+      TokenStatus.stunned => 'étourdi',
+      TokenStatus.dead => 'mort',
+      TokenStatus.unplayed => 'non joué',
+      TokenStatus.plays || TokenStatus.blank => null,
+    };
+    final progress = current ? 'en cours' : (why != null ? null : (played ? 'joué' : 'à venir'));
+    return [name, faceText, ?why, ?progress].join(', ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final id = token.characterId;
     final stunned = token.status == TokenStatus.stunned;
     final dead = token.status == TokenStatus.dead;
-    final opacity = played ? 0.4 : (stunned || dead ? 0.6 : 1.0);
-    return GestureDetector(
-      key: ValueKey('token-$id'),
-      behavior: HitTestBehavior.opaque,
+    final unplayed = token.status == TokenStatus.unplayed;
+    final opacity = unplayed ? 0.5 : (played ? 0.4 : (stunned || dead ? 0.6 : 1.0));
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      button: true,
+      selected: current,
+      label: _label,
       onTap: onTap,
-      child: SizedBox(
-        width: 44,
-        height: 60,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: Opacity(
-                opacity: opacity,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: team.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: team, width: 2),
-                  ),
-                  foregroundDecoration: dead
-                      ? BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8))
-                      : null,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      FaceGlyph(face: token.face, size: 24),
-                      const SizedBox(height: 3),
-                      CircleAvatar(
-                        radius: 9,
-                        backgroundColor: team,
-                        child: Text(
-                          name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-                          style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (current)
+      child: GestureDetector(
+        key: ValueKey('token-$id'),
+        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
+        onTap: onTap,
+        child: SizedBox(
+          width: _TimelineBarState._minSlot,
+          height: 60,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
               Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    key: ValueKey('token-current-$id'),
+                child: Opacity(
+                  opacity: opacity,
+                  child: Container(
                     decoration: BoxDecoration(
+                      color: team.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white, width: 3),
+                      border: Border.all(color: team, width: 2),
+                    ),
+                    foregroundDecoration: dead
+                        ? BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8))
+                        : null,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FaceGlyph(face: token.face, size: 24),
+                        const SizedBox(height: 3),
+                        CircleAvatar(
+                          radius: 9,
+                          backgroundColor: team,
+                          child: Text(
+                            name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+                            style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            if (stunned)
-              Positioned(
-                right: -4,
-                top: -4,
-                child: Icon(Icons.flash_off, key: ValueKey('token-stunned-$id'), size: 16, color: Colors.amber),
-              ),
-            if (dead)
-              Positioned(
-                right: -4,
-                top: -4,
-                child: Icon(Icons.close, key: ValueKey('token-dead-$id'), size: 16, color: Colors.redAccent),
-              ),
-          ],
+              if (current)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      key: ValueKey('token-current-$id'),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white, width: 3),
+                      ),
+                    ),
+                  ),
+                ),
+              if (stunned) _mark(Icons.flash_off, 'token-stunned-$id', Colors.amber),
+              if (dead) _mark(Icons.close, 'token-dead-$id', Colors.redAccent),
+              // The match was decided before this action (END-1).
+              if (unplayed) _mark(Icons.flag_outlined, 'token-unplayed-$id', Colors.white70),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _mark(IconData icon, String key, Color color) =>
+      Positioned(right: -4, top: -4, child: Icon(icon, key: ValueKey(key), size: 16, color: color));
 }
 
 /// The playhead (TL-4): a small triangle above a thin line across the track.
