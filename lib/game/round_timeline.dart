@@ -76,6 +76,7 @@ TokenStatus _status(ResolveStep step, DieFace face, {required bool isDead}) {
 
 /// The two players of a timeline board, as the board widget takes them, indexed by player: each team holds the
 /// characters still alive, ordered by slot. A character with no HP left has left its cell (CELL-6, DEAD-1).
+/// `fallen` stays empty: a timeline board does not tell in which order the dead fell.
 List<PlayerView> playersFromBoard(List<CharacterView> board) => [
   for (final player in [0, 1])
     PlayerView(

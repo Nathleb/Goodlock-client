@@ -42,37 +42,42 @@ class MatchBoard extends StatelessWidget {
     this.roundStartHp,
   });
 
-  static const _actorScale = 1.05;
+  /// The space between a cell and its neighbour above or below, split between the two rows.
+  static const _rowGap = 3.0;
+
+  /// How far the actor's cell comes forward on its left and right (STEP-1). Less than [_padding] and [_laneInset], so
+  /// it stays on the screen and off the lane labels; up and down it fills the gap between rows.
+  static const _lift = 4.0;
+  static const _padding = 8.0;
+  static const _laneInset = 8.0;
   static const _neutral = Colors.white54;
 
   @override
   Widget build(BuildContext context) {
     final actor = _actor();
-    final board = Row(
-      children: [
-        Expanded(flex: 5, child: _side(players[me], mine: true, actor: actor)),
-        Expanded(flex: 2, child: outcome == null ? Center(child: center) : _lane(context, actor)),
-        Expanded(flex: 5, child: _side(players[1 - me], mine: false, actor: actor)),
-      ],
-    );
+    // One shape whatever the notch, so the cells keep their state when the playhead moves.
     return Padding(
-      padding: const EdgeInsets.all(8),
-      child: actor == null
-          ? board
+      padding: const EdgeInsets.all(_padding),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Row(
+            children: [
+              Expanded(flex: 5, child: _side(players[me], mine: true, actor: actor)),
+              Expanded(flex: 2, child: outcome == null ? Center(child: center) : _lane(context, actor)),
+              Expanded(flex: 5, child: _side(players[1 - me], mine: false, actor: actor)),
+            ],
+          ),
           // The actor's cell is laid out over the same grid, last, so it is painted above its neighbours and the lane.
-          : Stack(
-              fit: StackFit.expand,
-              children: [
-                board,
-                Row(
-                  children: [
-                    Expanded(flex: 5, child: actor.position.playerIndex == me ? _actorColumn(actor) : const SizedBox()),
-                    const Spacer(flex: 2),
-                    Expanded(flex: 5, child: actor.position.playerIndex == me ? const SizedBox() : _actorColumn(actor)),
-                  ],
-                ),
-              ],
-            ),
+          Row(
+            children: [
+              Expanded(flex: 5, child: _actorColumn(actor, mine: true)),
+              const Spacer(flex: 2),
+              Expanded(flex: 5, child: _actorColumn(actor, mine: false)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -97,11 +102,12 @@ class MatchBoard extends StatelessWidget {
     return null;
   }
 
-  Widget _rows(Widget Function(int slot) row) => Column(
+  Widget _rows(Widget Function(int slot) row, {Key? key}) => Column(
+    key: key,
     children: [
       for (var slot = 0; slot < boardSize; slot++)
         Expanded(
-          child: Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: row(slot)),
+          child: Padding(padding: const EdgeInsets.symmetric(vertical: _rowGap), child: row(slot)),
         ),
     ],
   );
@@ -140,38 +146,44 @@ class MatchBoard extends StatelessWidget {
     return tile;
   }
 
-  Widget _actorColumn(CharacterView actor) {
+  /// The column of my side ([mine]) or of the opponent's, holding the actor's cell when the actor stands there.
+  Widget _actorColumn(CharacterView? actor, {required bool mine}) {
+    if (actor == null || (actor.position.playerIndex == me) != mine) return const SizedBox.shrink();
     final cell = actor.position;
-    final mine = cell.playerIndex == me;
     return _rows((slot) {
       if (slot != cell.slot) return const SizedBox.shrink();
       final tile = _cell(actor, _targetAt(cell), ValueKey('target-${cell.playerIndex}-${cell.slot}'), mine: mine);
-      return Transform.scale(
-        scale: _actorScale,
-        child: _bordered(tile, key: ValueKey('actor-ring-${actor.id}'), color: Colors.white, width: 2.5, outside: true),
+      // It comes forward: laid out bigger than its place, over the gaps around it, ringed on its inner edge.
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: -_lift,
+            right: -_lift,
+            top: -_rowGap,
+            bottom: -_rowGap,
+            child: _bordered(tile, key: ValueKey('actor-ring-${actor.id}'), color: Colors.white, width: 2.5),
+          ),
+        ],
       );
     });
   }
 
-  Widget _bordered(Widget child, {required Key key, required Color color, double width = 2, bool outside = false}) =>
-      DecoratedBox(
-        key: key,
-        position: DecorationPosition.foreground,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: color,
-            width: width,
-            strokeAlign: outside ? BorderSide.strokeAlignOutside : BorderSide.strokeAlignInside,
-          ),
-        ),
-        child: child,
-      );
+  Widget _bordered(Widget child, {required Key key, required Color color, double width = 2}) => DecoratedBox(
+    key: key,
+    position: DecorationPosition.foreground,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: color, width: width),
+    ),
+    child: child,
+  );
 
   /// The lane during a step: in each row, the label of my cell on the left, the opponent's on the right (STEP-2..4).
+  /// A label alone in its row takes the whole lane; two share it in halves.
   Widget _lane(BuildContext context, CharacterView? actor) {
     final style = Theme.of(context).textTheme.labelSmall;
-    Widget label(int player, int slot, {required Alignment at}) {
+    Widget? label(int player, int slot, {required bool mine}) {
       final target = _targetAt(Cell(player, slot));
       final skipped = target == null && outcome!.skipped && actor != null && actor.position == Cell(player, slot);
       final (String, Color, Key)? shown = target != null
@@ -179,34 +191,35 @@ class MatchBoard extends StatelessWidget {
           : skipped
           ? ('Action annulée (étourdi)', _neutral, ValueKey('skipped-${actor.id}'))
           : null;
+      if (shown == null) return null;
       return Expanded(
         child: Align(
-          alignment: at,
-          child: shown == null
-              ? null
-              : Text(
-                  shown.$1,
-                  key: shown.$3,
-                  style: style?.copyWith(color: shown.$2),
-                  textAlign: at == Alignment.centerLeft ? TextAlign.left : TextAlign.right,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
+          alignment: mine ? Alignment.centerLeft : Alignment.centerRight,
+          child: Text(
+            shown.$1,
+            key: shown.$3,
+            style: style?.copyWith(color: shown.$2),
+            textAlign: mine ? TextAlign.left : TextAlign.right,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       );
     }
 
-    final theirs = 1 - me;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: _rows(
-        (slot) => Row(
+      padding: const EdgeInsets.symmetric(horizontal: _laneInset),
+      child: _rows(key: const ValueKey('lane'), (slot) {
+        final left = label(me, slot, mine: true);
+        final right = label(1 - me, slot, mine: false);
+        return Row(
           children: [
-            label(me, slot, at: Alignment.centerLeft),
-            label(theirs, slot, at: Alignment.centerRight),
+            ?left,
+            if (left != null && right != null) const SizedBox(width: 4),
+            ?right,
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 }

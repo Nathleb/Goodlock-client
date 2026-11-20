@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goodlock_app/game/round_timeline.dart';
 import 'package:goodlock_app/game/step_outcome.dart';
@@ -56,6 +57,7 @@ void main() {
     Size size = const Size(2400, 1080),
     double dpr = 2.625,
     void Function(CharacterView)? onPortraitTap,
+    double? boardHeight,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = dpr;
@@ -63,13 +65,19 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: MatchBoard(
-            players: players ?? board(),
-            me: 0,
-            outcome: outcome,
-            roundStartHp: roundStartHp,
-            center: center,
-            onPortraitTap: onPortraitTap,
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              height: boardHeight,
+              child: MatchBoard(
+                players: players ?? board(),
+                me: 0,
+                outcome: outcome,
+                roundStartHp: roundStartHp,
+                center: center,
+                onPortraitTap: onPortraitTap,
+              ),
+            ),
           ),
         ),
       ),
@@ -85,6 +93,30 @@ void main() {
   /// The middle of the lane, between my cells and the opponent's (m1 and t1 are never highlighted here).
   double laneMiddle(WidgetTester tester) =>
       (tester.getRect(cellOf('m1')).right + tester.getRect(cellOf('t1')).left) / 2;
+
+  /// The lane inside its margins, where the labels go (only during a step).
+  Rect lane(WidgetTester tester) => tester.getRect(key('lane'));
+
+  /// The glyphs of a label, one rect per line, on the screen: where the text is really drawn in its box. Spaces are
+  /// left out, since a space where a line wraps hangs past the edge.
+  List<Rect> linesOf(WidgetTester tester, Finder label) {
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.descendant(of: label, matching: find.byType(RichText)).first,
+    );
+    final text = paragraph.text.toPlainText();
+    final lines = <double, Rect>{};
+    for (var i = 0; i < text.length; i++) {
+      if (text[i].trim().isEmpty) continue;
+      for (final box in paragraph.getBoxesForSelection(TextSelection(baseOffset: i, extentOffset: i + 1))) {
+        final rect = box.toRect();
+        lines.update(rect.top, (line) => line.expandToInclude(rect), ifAbsent: () => rect);
+      }
+    }
+    final origin = paragraph.localToGlobal(Offset.zero);
+    return [for (final line in lines.values) line.shift(origin)];
+  }
+
+  Rect inkOf(WidgetTester tester, Finder label) => linesOf(tester, label).reduce((a, b) => a.expandToInclude(b));
 
   group('STEP-1: the acting character', () {
     testWidgets('STEP-1: only the acting character\'s cell is ringed in white', (tester) async {
@@ -123,6 +155,66 @@ void main() {
       expect(order.last, 'actor-ring-m0');
       expect(order.where((k) => k == 'cell'), hasLength(7));
       expect(order, contains('label-0-0'));
+    });
+
+    for (final size in const [Size(640, 360), Size(800, 360), Size(914, 411)]) {
+      testWidgets('STEP-1: the acting cell comes forward but stays on the screen and off the lane labels, '
+          'on both sides, at ${size.width.toInt()}×${size.height.toInt()}', (tester) async {
+        // Each actor shields itself: its own label sits in the lane, in its row.
+        for (final (actor, side, slot) in const [('m0', 0, 0), ('t3', 1, 3)]) {
+          await open(
+            tester,
+            size: size,
+            dpr: 1,
+            outcome: StepOutcome(actor, false, [CellOutcome(Cell(side, slot), actor, 'Shield', 'Bouclier +4')], ''),
+          );
+          final ring = tester.getRect(key('actor-ring-$actor'));
+          final label = tester.getRect(key('label-$side-$slot'));
+          final screen = Offset.zero & size;
+          expect(
+            screen.contains(ring.topLeft) && screen.contains(ring.bottomRight - const Offset(1, 1)),
+            isTrue,
+            reason: '$actor: $ring on $screen',
+          );
+          if (side == 0) {
+            expect(ring.right, lessThan(label.left), reason: actor);
+          } else {
+            expect(ring.left, greaterThan(label.right), reason: actor);
+          }
+          expect(
+            tester.getRect(cellOf(actor)).width,
+            greaterThan(tester.getRect(cellOf(side == 0 ? 'm1' : 't1')).width),
+          );
+          expect(tester.takeException(), isNull);
+        }
+      });
+    }
+
+    testWidgets('STEP-1: the acting cell is drawn in its own column, level with its place', (tester) async {
+      await open(tester, outcome: const StepOutcome('m2', false, [], ''));
+      final middle = lane(tester).center.dx;
+      expect(tester.getCenter(key('actor-ring-m2')).dx, lessThan(middle));
+      expect(tester.getCenter(key('actor-ring-m2')).dy, closeTo(tester.getCenter(cellOf('t2')).dy, 1));
+
+      await open(tester, outcome: const StepOutcome('t1', false, [], ''));
+      expect(tester.getCenter(key('actor-ring-t1')).dx, greaterThan(middle));
+      expect(tester.getCenter(key('actor-ring-t1')).dy, closeTo(tester.getCenter(cellOf('m1')).dy, 1));
+    });
+
+    testWidgets('STEP-1: the cells keep their state when the playhead moves, actor or not', (tester) async {
+      Element cell(String id) => tester.element(find.byWidgetPredicate((w) => w is CellTile && w.character.id == id));
+      State portrait(String id) => tester.state(
+        find.descendant(of: key('portrait-$id'), matching: find.byWidgetPredicate((w) => w is StatefulWidget)).first,
+      );
+
+      await open(tester, outcome: const StepOutcome(null, false, [], 'Début du round.'));
+      final before = (cell('m2'), cell('t2'), portrait('m2'));
+      for (final outcome in const [StepOutcome('m0', false, [], ''), StepOutcome('t1', true, [], ''), null]) {
+        await open(tester, outcome: outcome);
+        expect(identical(cell('m2'), before.$1), isTrue, reason: 'after ${outcome?.actorId}');
+        expect(identical(cell('t2'), before.$2), isTrue, reason: 'after ${outcome?.actorId}');
+        expect(identical(portrait('m2'), before.$3), isTrue, reason: 'after ${outcome?.actorId}');
+      }
     });
 
     testWidgets('STEP-1: the acting character\'s portrait can still be tapped, and its neighbours\' too', (
@@ -204,6 +296,64 @@ void main() {
       expect(mine.left, greaterThanOrEqualTo(tester.getRect(cellOf('m1')).right));
       expect(theirs.right, lessThanOrEqualTo(tester.getRect(cellOf('t1')).left));
     });
+
+    // The test font draws every glyph as a square of the font size: these labels wrap on two lines, with no ellipsis
+    // (an ellipsis is not part of the text, so its line would end short of the edge), over a whole lane and over half
+    // a lane.
+    const wrapped = 'Bouclier +4 · Étourdi';
+    const wrappedHalf = 'Gel 2 · +4';
+
+    testWidgets('STEP-2: a label alone in its row takes the whole lane, mine from its left edge, the opponent\'s to '
+        'its right edge, wrapped lines included', (tester) async {
+      await open(
+        tester,
+        outcome: const StepOutcome('m3', false, [
+          CellOutcome(Cell(0, 1), 'm1', 'Shield', wrapped),
+          CellOutcome(Cell(1, 2), 't2', 'Shield', wrapped),
+          CellOutcome(Cell(0, 3), 'm3', 'Shield', '+4'),
+          CellOutcome(Cell(1, 4), null, 'Damage', 'raté'),
+        ], ''),
+      );
+      final inner = lane(tester);
+      // The long labels wrap over the whole lane, wider than a half.
+      for (final k in ['label-0-1', 'label-1-2']) {
+        expect(linesOf(tester, key(k)), hasLength(2), reason: k);
+        expect(tester.getRect(key(k)).width, greaterThan(inner.width / 2), reason: k);
+      }
+      for (final line in linesOf(tester, key('label-0-1'))) {
+        expect(line.left, closeTo(inner.left, 1));
+      }
+      for (final line in linesOf(tester, key('label-1-2'))) {
+        expect(line.right, closeTo(inner.right, 1));
+      }
+      expect(inkOf(tester, key('label-0-3')).left, closeTo(inner.left, 1));
+      expect(inkOf(tester, key('label-1-4')).right, closeTo(inner.right, 1));
+    });
+
+    testWidgets('STEP-2: two labels in a row share the lane in halves, each on its edge', (tester) async {
+      await open(
+        tester,
+        outcome: const StepOutcome('m3', false, [
+          CellOutcome(Cell(0, 1), 'm1', 'Shield', wrappedHalf),
+          CellOutcome(Cell(1, 1), 't1', 'Damage', wrappedHalf),
+        ], ''),
+      );
+      final inner = lane(tester);
+      for (final k in ['label-0-1', 'label-1-1']) {
+        expect(linesOf(tester, key(k)), hasLength(2), reason: k);
+      }
+      final mine = tester.getRect(key('label-0-1'));
+      final theirs = tester.getRect(key('label-1-1'));
+      expect(mine.width, lessThanOrEqualTo(inner.width / 2));
+      expect(theirs.width, lessThanOrEqualTo(inner.width / 2));
+      expect(mine.right, lessThanOrEqualTo(theirs.left));
+      for (final line in linesOf(tester, key('label-0-1'))) {
+        expect(line.left, closeTo(inner.left, 1));
+      }
+      for (final line in linesOf(tester, key('label-1-1'))) {
+        expect(line.right, closeTo(inner.right, 1));
+      }
+    });
   });
 
   group('STEP-3: an empty target cell', () {
@@ -230,13 +380,13 @@ void main() {
       await open(tester, outcome: stunned);
       expect(tester.widget<Text>(key('skipped-t1')).data, 'Action annulée (étourdi)');
       expect(tester.getCenter(key('skipped-t1')).dy, closeTo(tester.getCenter(cellOf('t1')).dy, 1));
-      expect(tester.getCenter(key('skipped-t1')).dx, greaterThan(laneMiddle(tester)));
+      expect(inkOf(tester, key('skipped-t1')).center.dx, greaterThan(laneMiddle(tester)));
       expect(key('actor-ring-t1'), findsOneWidget);
     });
 
     testWidgets('STEP-4: a skipped action of mine reads on my side of the lane', (tester) async {
       await open(tester, outcome: const StepOutcome('m2', true, [], ''));
-      expect(tester.getCenter(key('skipped-m2')).dx, lessThan(laneMiddle(tester)));
+      expect(inkOf(tester, key('skipped-m2')).center.dx, lessThan(laneMiddle(tester)));
     });
 
     testWidgets('STEP-4: an actor that is no longer on the board shows no label', (tester) async {
@@ -355,6 +505,46 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+
+    // In the match screen at 640×360 and 800×360 the board is 240 dp high: rows of about 45 dp.
+    const longest = '−9 · Étourdi · 1 t. · Puissance +2 · +4 de bouclier';
+    for (final width in const [640.0, 800.0]) {
+      testWidgets(
+        'STEP-2, STEP-4: a label holds two lines, cut with an ellipsis, inside its row at ${width.toInt()}×360',
+        (tester) async {
+          await open(
+            tester,
+            size: Size(width, 360),
+            dpr: 1,
+            boardHeight: 240,
+            outcome: const StepOutcome('m4', true, [
+              CellOutcome(Cell(0, 0), 'm0', 'Shield', longest),
+              CellOutcome(Cell(1, 0), 't0', 'Damage', longest),
+              CellOutcome(Cell(1, 2), 't2', 'Damage', longest),
+            ], ''),
+            players: [
+              PlayerView(0, [...board()[0].team, character('m4', side: 0, slot: 4)]),
+              board()[1],
+            ],
+          );
+          final row = lane(tester).height / 5;
+          expect(row, closeTo(45, 0.5));
+          for (final k in ['label-0-0', 'label-1-0', 'label-1-2', 'skipped-m4']) {
+            final paragraph = tester.renderObject<RenderParagraph>(
+              find.descendant(of: key(k), matching: find.byType(RichText)),
+            );
+            // The height the text needs for its lines at its width: what is drawn, unclipped by its box.
+            final needed = paragraph.getMaxIntrinsicHeight(paragraph.size.width);
+            expect(needed, lessThanOrEqualTo(paragraph.size.height + 0.01), reason: '$k clipped');
+            expect(needed, lessThanOrEqualTo(row - 6), reason: '$k taller than its row');
+            expect(linesOf(tester, key(k)).length, lessThanOrEqualTo(2), reason: k);
+          }
+          expect(tester.widget<Text>(key('label-0-0')).maxLines, 2);
+          expect(tester.widget<Text>(key('label-0-0')).overflow, TextOverflow.ellipsis);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
 
     testWidgets('STEP-4: a skipped action does not overflow at 640×360', (tester) async {
       await open(tester, size: small, dpr: 1, outcome: const StepOutcome('t3', true, [], ''));

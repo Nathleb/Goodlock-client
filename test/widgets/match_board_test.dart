@@ -57,6 +57,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('LAYOUT-3: seated second, I still see my side on the left and the opponent\'s on the right', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(2400, 1080);
+    tester.view.devicePixelRatio = 2.625;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: MatchBoard(players: [PlayerView(0, mine()), PlayerView(1, theirs())], me: 1)),
+      ),
+    );
+    await tester.pump();
+
+    // players[1] (t*) is mine: on the left, its faces on the lane side; players[0] (m*) on the right.
+    expect(tester.getCenter(find.text('Name t0')).dx, lessThan(tester.getCenter(find.text('Name m0')).dx));
+    expect(
+      tester.getCenter(find.text('Name t0')).dx,
+      lessThan(tester.view.physicalSize.width / tester.view.devicePixelRatio / 2),
+    );
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('face-t0'))).dx,
+      greaterThan(tester.getCenter(find.text('Name t0')).dx),
+    );
+    expect(tester.getCenter(find.text('Name t1')).dy, lessThan(tester.getCenter(find.text('Name t3')).dy));
+  });
+
   testWidgets('LAYOUT-4: an empty cell is drawn at its place, on both sides', (tester) async {
     await open(tester);
     expect(find.text('vide'), findsNWidgets(2));
@@ -167,6 +193,9 @@ void main() {
 
     testWidgets('CELL-5: with no handler portraits are not tappable', (tester) async {
       await openWith(tester);
+      for (final id in ['m2', 't2']) {
+        expect(tester.widget<InkWell>(find.byKey(ValueKey('portrait-$id'))).onTap, isNull, reason: id);
+      }
       await tester.tap(find.byKey(const ValueKey('portrait-m2')));
       expect(tester.takeException(), isNull);
     });
