@@ -66,7 +66,7 @@ void main() {
     myReady: ready,
     mine: [for (var i = 0; i < 4; i++) character('m$i', side: 0, slot: i, locked: locked.contains('m$i'))],
     theirs: [for (var i = 0; i < 4; i++) character('t$i', side: 1, slot: i)],
-    preview: [for (final id in ['m0', 't0', 'm1']) ResolveStep(id, false, const [], const [])],
+    preview: [for (final id in ['m0', 't0', 'm1']) ResolveStep(id, false, const [], const [], unplayed: false)],
   );
 
   testWidgets('shows the screen of each phase as the server moves on', (tester) async {

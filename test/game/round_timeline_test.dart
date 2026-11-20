@@ -17,7 +17,7 @@ const hit = DieFace('hit', 1, [
 ]);
 
 ResolveStep step(String actor, List<CharacterView> after, {bool skipped = false}) =>
-    ResolveStep(actor, skipped, const [], [for (final c in after) ResolveChange(c.id, c)]);
+    ResolveStep(actor, skipped, const [], [for (final c in after) ResolveChange(c.id, c)], unplayed: false);
 
 List<(String, int, int, Cell)> summary(List<CharacterView> board) => [
   for (final c in board) (c.id, c.hp, c.shield, c.position),

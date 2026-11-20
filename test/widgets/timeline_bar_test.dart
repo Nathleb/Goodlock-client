@@ -18,7 +18,7 @@ const hit = DieFace('hit', 1, [
 ]);
 
 ResolveStep step(String actor, {List<CharacterView> after = const [], bool skipped = false}) =>
-    ResolveStep(actor, skipped, const [], [for (final c in after) ResolveChange(c.id, c)]);
+    ResolveStep(actor, skipped, const [], [for (final c in after) ResolveChange(c.id, c)], unplayed: false);
 
 /// a (mine, hits), b (theirs, blank), c (mine, hits), in that order.
 RoundTimeline threeTokens({List<String> order = const ['a', 'b', 'c']}) => RoundTimeline.build(

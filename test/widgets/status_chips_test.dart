@@ -50,6 +50,7 @@ void main() {
       baseSpeed: 3,
       baseDie: base.baseDie,
       face: base.face,
+      faceIndex: base.faceIndex,
       isFaceLocked: false,
       position: base.position,
       stats: const {'POWER': 3, 'ARMOR': -1, 'SPEED': 0},

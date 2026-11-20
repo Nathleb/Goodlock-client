@@ -38,6 +38,7 @@ CharacterView knight({List<DieFace>? die, DieFace? face}) {
     baseDie: faces,
     // A copy, not the same instance: the face is found by value.
     face: face ?? sixFaces()[2],
+    faceIndex: 2,
     isFaceLocked: false,
     position: const Cell(0, 0),
   );

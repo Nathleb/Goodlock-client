@@ -235,7 +235,7 @@ void main() {
   });
 
   group('UX-1, FLOW-3, TL-6: the timeline of the Keep', () {
-    ResolveStep act(String actor) => ResolveStep(actor, false, const [], const []);
+    ResolveStep act(String actor) => ResolveStep(actor, false, const [], const [], unplayed: false);
     GameStateView keepWith(List<String> order, {int rollsLeft = 2, bool ready = false, List<String> locked = const []}) =>
         stateOf(
           Phase.keep,

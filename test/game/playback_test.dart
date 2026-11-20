@@ -20,6 +20,7 @@ CharacterView ch(
   baseSpeed: 1,
   baseDie: const [_face, _face, _face, _face, _face, _face],
   face: _face,
+  faceIndex: 0,
   isFaceLocked: false,
   position: Cell(pi, slot),
 );

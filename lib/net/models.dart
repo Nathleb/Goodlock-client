@@ -166,6 +166,10 @@ class CharacterView {
   final List<DieFace> baseDie;
   final DieFace face;
 
+  /// Index of [face] in [baseDie]: a die can hold identical faces, so the content alone does not tell which
+  /// one came up.
+  final int faceIndex;
+
   /// Whether the die was kept at the last Roll (ROLL-2). In a state sent to me alone, my own dice show
   /// instead what I last confirmed in the current Keep; the opponent's never show their Keep in progress.
   final bool isFaceLocked;
@@ -184,6 +188,7 @@ class CharacterView {
     required this.baseSpeed,
     required this.baseDie,
     required this.face,
+    required this.faceIndex,
     required this.isFaceLocked,
     required this.position,
     this.modifiers = const [],
@@ -193,7 +198,8 @@ class CharacterView {
 
   bool get isDead => hp <= 0;
 
-  CharacterView copyWith({int? hp, int? shield, Cell? position, DieFace? face, bool? isFaceLocked}) => CharacterView(
+  CharacterView copyWith({int? hp, int? shield, Cell? position, DieFace? face, int? faceIndex, bool? isFaceLocked}) =>
+      CharacterView(
         id: id,
         catalogId: catalogId,
         name: name,
@@ -203,6 +209,7 @@ class CharacterView {
         baseSpeed: baseSpeed,
         baseDie: baseDie,
         face: face ?? this.face,
+        faceIndex: faceIndex ?? this.faceIndex,
         isFaceLocked: isFaceLocked ?? this.isFaceLocked,
         position: position ?? this.position,
         modifiers: modifiers,
@@ -220,6 +227,7 @@ class CharacterView {
         baseSpeed: j['baseSpeed'] as int,
         baseDie: _list(j['baseDie'], DieFace.fromJson),
         face: DieFace.fromJson(j['face'] as Json),
+        faceIndex: j['faceIndex'] as int,
         isFaceLocked: j['isFaceLocked'] as bool,
         position: Cell.fromJson(j['position'] as Json),
         modifiers: _list(j['modifiers'], StatInstance.fromJson),
@@ -371,15 +379,20 @@ class ResolveChange {
 class ResolveStep {
   final String characterId;
   final bool skipped;
+
+  /// The match was decided before this action's turn: it was not played (END-1). Such a step is also
+  /// skipped, with no effects and no changes; it keeps one step per queue entry in the log.
+  final bool unplayed;
   final List<ResolvedEffect> effects;
   final List<ResolveChange> changes;
-  const ResolveStep(this.characterId, this.skipped, this.effects, this.changes);
+  const ResolveStep(this.characterId, this.skipped, this.effects, this.changes, {required this.unplayed});
 
   factory ResolveStep.fromJson(Json j) => ResolveStep(
         j['characterId'] as String,
         j['skipped'] as bool,
         _list(j['effects'], ResolvedEffect.fromJson),
         _list(j['changes'], ResolveChange.fromJson),
+        unplayed: j['unplayed'] as bool,
       );
 }
 

@@ -31,11 +31,11 @@ List<CharacterView> theirs() => [for (var i = 0; i < 4; i++) character('t$i', si
 List<ResolveStep> round() => [
   ResolveStep('m0', false, const [
     ResolvedEffect(['Damage'], [Cell(1, 0)]),
-  ], [ResolveChange('t0', character('t0', side: 1, slot: 0, hp: 15))]),
+  ], [ResolveChange('t0', character('t0', side: 1, slot: 0, hp: 15))], unplayed: false),
   ResolveStep('t1', false, const [
     ResolvedEffect(['Damage'], [Cell(0, 1)]),
-  ], [ResolveChange('m1', character('m1', side: 0, slot: 1, hp: 0))]),
-  const ResolveStep('m2', false, [], []),
+  ], [ResolveChange('m1', character('m1', side: 0, slot: 1, hp: 0))], unplayed: false),
+  const ResolveStep('m2', false, [], [], unplayed: false),
 ];
 
 GameStateView keep({bool ready = false, List<String> locked = const []}) =>

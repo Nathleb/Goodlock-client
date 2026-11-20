@@ -305,8 +305,9 @@ void main() {
             ResolvedEffect(['Damage'], [Cell(1, 0)]),
           ],
           [ResolveChange('b', b.copyWith(hp: 0))],
+          unplayed: false,
         ),
-        const ResolveStep('c', true, [], []),
+        const ResolveStep('c', true, [], [], unplayed: false),
       ],
     );
     final startHp = {for (final ch in timeline.boardAt(0)) ch.id: ch.hp};

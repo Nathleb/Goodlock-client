@@ -19,9 +19,9 @@ ResolvedEffect resolved(FaceEffect effect, List<Cell> cells) =>
     ResolvedEffect([for (final p in effect.parts) p.part], cells);
 
 ResolveStep acts(String actor, List<ResolvedEffect> effects, List<CharacterView> after) =>
-    ResolveStep(actor, false, effects, [for (final c in after) ResolveChange(c.id, c)]);
+    ResolveStep(actor, false, effects, [for (final c in after) ResolveChange(c.id, c)], unplayed: false);
 
-ResolveStep skips(String actor) => ResolveStep(actor, true, const [], const []);
+ResolveStep skips(String actor) => ResolveStep(actor, true, const [], const [], unplayed: false);
 
 /// The outcome of the only step of a one-step round.
 StepOutcome onlyStep(List<CharacterView> start, ResolveStep step) =>
