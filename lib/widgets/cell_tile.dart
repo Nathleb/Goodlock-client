@@ -37,40 +37,45 @@ class CellTile extends StatelessWidget {
     final theme = Theme.of(context);
     final portrait = Expanded(
       flex: 3,
-      child: InkWell(
-        key: ValueKey('portrait-${character.id}'),
-        borderRadius: BorderRadius.circular(10),
-        onTap: onPortraitTap,
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: mine ? Alignment.centerLeft : Alignment.centerRight,
-            child: SizedBox(
-              width: 150,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: mine ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-                children: [
-                  Text(character.name, style: theme.textTheme.titleSmall, overflow: TextOverflow.ellipsis),
-                  Text('vitesse ${character.baseSpeed}', style: theme.textTheme.labelSmall),
-                  const SizedBox(height: 2),
-                  Container(
-                    key: ValueKey('hp-${character.id}'),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _hpBar(),
-                        Text(
-                          '${character.hp}/${character.maxHp}',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.labelSmall,
-                        ),
-                      ],
+      child: Semantics(
+        button: onPortraitTap != null,
+        label: onPortraitTap == null ? null : 'Voir le dé de ${character.name}',
+        child: InkWell(
+          key: ValueKey('portrait-${character.id}'),
+          borderRadius: BorderRadius.circular(10),
+          onTap: onPortraitTap,
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: mine ? Alignment.centerLeft : Alignment.centerRight,
+              child: SizedBox(
+                width: 150,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: mine ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                  children: [
+                    Text(character.name, style: theme.textTheme.titleSmall, overflow: TextOverflow.ellipsis),
+                    Text('vitesse ${character.baseSpeed}', style: theme.textTheme.labelSmall),
+                    const SizedBox(height: 2),
+                    Container(
+                      key: ValueKey('hp-${character.id}'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // The text below reads the HP; the bar would turn the portrait's button into a progress bar.
+                          ExcludeSemantics(child: _hpBar()),
+                          Text(
+                            '${character.hp}/${character.maxHp}',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelSmall,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  StatusChips(character: character),
-                ],
+                    StatusChips(character: character),
+                  ],
+                ),
               ),
             ),
           ),
@@ -78,11 +83,10 @@ class CellTile extends StatelessWidget {
       ),
     );
     final face = Expanded(flex: 2, child: Center(child: _face(context)));
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(10),
-      ),
+    // A Material, not a coloured box: the ink of the portrait and the face is drawn on it, so a tap shows.
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(10),
       child: Row(children: mine ? [portrait, face] : [face, portrait]),
     );
   }
@@ -128,11 +132,17 @@ class CellTile extends StatelessWidget {
           ),
       ],
     );
-    return InkWell(
-      key: ValueKey('face-${character.id}'),
-      borderRadius: BorderRadius.circular(6),
-      onTap: onFaceTap,
-      child: Padding(padding: const EdgeInsets.all(6), child: tile),
+    return Semantics(
+      button: onFaceTap != null,
+      label: onFaceTap == null
+          ? null
+          : 'Garder / relâcher le dé de ${character.name} (${locked ? 'gardé' : 'relâché'})',
+      child: InkWell(
+        key: ValueKey('face-${character.id}'),
+        borderRadius: BorderRadius.circular(6),
+        onTap: onFaceTap,
+        child: Padding(padding: const EdgeInsets.all(6), child: tile),
+      ),
     );
   }
 }
