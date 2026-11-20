@@ -6,7 +6,7 @@ import 'match_clocks_bar.dart';
 
 /// The status bar of the match screens (LAYOUT-2): the phase and the round, who holds the initiative, the
 /// caption of the step on display (STEP-5), both clocks, concede, and the Confirm button, which reads Cancel
-/// once confirmed (GAME-8). During Resolve there is nothing to confirm: no button.
+/// once confirmed (GAME-8). During Resolve, and for a spectator, there is nothing to confirm: no button.
 class MatchBar extends StatelessWidget {
   final HumanMatchController controller;
 

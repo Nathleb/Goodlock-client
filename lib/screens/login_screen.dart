@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
                 Text('Goodlock', textAlign: TextAlign.center, style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 8),
-                Text('prototype Flutter + Flame', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+                Text('prototype Flutter', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
                 const SizedBox(height: 32),
                 TextField(controller: _user, decoration: const InputDecoration(labelText: 'Pseudo'), textInputAction: TextInputAction.next),
                 const SizedBox(height: 12),

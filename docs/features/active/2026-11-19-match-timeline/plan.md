@@ -9,5 +9,5 @@
 - [x] 6. Die view and portrait tap (DIE-1, DIE-2, CELL-5).
 - [x] 7. Board shows a step (STEP-1..4, CELL-3).
 - [x] 8. Match screen replaces the Keep screen and the Flame Resolve in `HumanMatchView` (LAYOUT-1, LAYOUT-2, FLOW-3..6).
-- [ ] 9. Remove the Flame Resolve scene; move the bot-vs-bot screen to the match screen.
+- [x] 9. Remove the Flame Resolve scene; move the bot-vs-bot screen to the match screen.
 - [ ] 10. Docs: `docs/DEVELOPMENT.md`; delete this folder.

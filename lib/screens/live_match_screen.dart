@@ -1,20 +1,12 @@
-import 'dart:async';
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 
 import '../app/session.dart';
-import '../game/match_clocks.dart';
-import '../game/resolve_game.dart';
+import '../game/human_match_controller.dart';
 import '../net/bot.dart';
-import '../net/models.dart';
-import '../net/rules.dart';
-import '../widgets/match_clocks_bar.dart';
-import '../widgets/match_result.dart';
-import '../widgets/resolve_view.dart';
+import 'spectator_match_view.dart';
 
-/// Live: two bots play on the real server; we watch bot A's seat and animate every round
-/// from the server's own events (deck choice, team preview, placement, combat).
+/// Live: two bots play on the real server; we watch bot A's seat. The bots play deck choice, team preview and
+/// placement; every round is replayed from the server's own events on the match screen ([SpectatorMatchView]).
 class LiveMatchScreen extends StatefulWidget {
   final AppSession session;
   const LiveMatchScreen({super.key, required this.session});
@@ -24,17 +16,10 @@ class LiveMatchScreen extends StatefulWidget {
 }
 
 class _LiveMatchScreenState extends State<LiveMatchScreen> {
-  final _game = ResolveGame();
-  final _queue = Queue<(List<CharacterView>, List<ResolveStep>)>();
-  final _subs = <StreamSubscription<Object?>>[];
   Bot? _a;
   Bot? _b;
+  HumanMatchController? _controller;
   String _status = 'Connexion des bots…';
-  GameStateView? _lastState;
-  GameOver? _over;
-  MatchClocks? _clocks;
-  int _rounds = 0;
-  bool _draining = false;
 
   @override
   void initState() {
@@ -52,66 +37,12 @@ class _LiveMatchScreenState extends State<LiveMatchScreen> {
       await b.setUp();
       _set('Room et choix des decks…');
       await seatBots(a, b);
-      _game.viewerIndex = a.me;
-      final clocks = _clocks = MatchClocks(a.me);
-
-      _subs.add(a.socket.states.listen((gs) {
-        _lastState = gs;
-        clocks.onState(gs, DateTime.now());
-        _set(_describe(gs));
-      }));
-      _subs.add(a.socket.presence.listen((p) => clocks.onPresence(p, DateTime.now())));
-      _subs.add(a.socket.resolved.listen((r) {
-        clocks.onState(r.gameState, DateTime.now());
-        // The state just before this event is this round's KEEP board (shields already reset).
-        final start = _lastState?.players.expand((p) => p.team).toList() ?? const <CharacterView>[];
-        _rounds++;
-        _queue.add((start, r.resolveLog));
-        _drain();
-      }));
-      _subs.add(a.socket.gameOver.listen((o) {
-        clocks.stop(DateTime.now());
-        setState(() => _over = o);
-      }));
+      if (!mounted) return;
+      setState(() => _controller = HumanMatchController(a.socket, me: a.me));
       a.socket.startGame();
     } catch (e) {
       _set('Échec : $e');
     }
-  }
-
-  String _describe(GameStateView gs) => switch (gs.phase) {
-        Phase.selection => 'Team preview : chaque bot garde $teamSize de ses $deckSize',
-        Phase.placement => 'Placement (équipe adverse cachée)',
-        Phase.keep => 'Round ${gs.currentRound + 1} — dés (relances : ${gs.rollsLeft})',
-        _ => gs.phase.name,
-      };
-
-  Future<void> _drain() async {
-    if (_draining) return;
-    _draining = true;
-    while (_queue.isNotEmpty && mounted) {
-      final (start, log) = _queue.removeFirst();
-      if (start.isEmpty) continue;
-      await _game.playRound(start, log);
-    }
-    _draining = false;
-    if (mounted) setState(() {});
-  }
-
-  /// AWAY-1: conceding loses at once, so it asks first.
-  Future<void> _confirmConcede() async {
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Abandonner le match ?'),
-        content: const Text('Tu perds immédiatement.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Continuer')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Abandonner')),
-        ],
-      ),
-    );
-    if (sure == true && _over == null) _a?.socket.concede();
   }
 
   void _set(String s) {
@@ -120,9 +51,7 @@ class _LiveMatchScreenState extends State<LiveMatchScreen> {
 
   @override
   void dispose() {
-    for (final s in _subs) {
-      s.cancel();
-    }
+    _controller?.dispose();
     _a?.dispose();
     _b?.dispose();
     super.dispose();
@@ -130,33 +59,18 @@ class _LiveMatchScreenState extends State<LiveMatchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final over = _over;
-    final finished = over != null && !_draining && _queue.isEmpty;
-    final me = _a?.me ?? 0;
-    final clocks = _clocks;
-    return GameScreenFrame(
-      game: _game,
-      title: 'Match en direct — rounds : $_rounds',
-      status: clocks == null ? null : MatchClocksBar(clocks: clocks),
-      center: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(_status, textAlign: TextAlign.center),
-          // FLOW-6, ROOM-6: the server has closed the room; the result leads out of the match.
-          if (finished)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: MatchResult(over: over, viewerIndex: me, onLeave: () => Navigator.of(context).pop()),
-            ),
-        ],
-      ),
-      controls: [
-        PlaybackControls(game: _game, onChanged: () => setState(() {})),
-        if (clocks != null && over == null) ...[
-          const SizedBox(width: 8),
-          TextButton.icon(onPressed: _confirmConcede, icon: const Icon(Icons.flag_outlined), label: const Text('Abandonner')),
-        ],
-      ],
+    final controller = _controller;
+    return Scaffold(
+      body: controller == null
+          ? SafeArea(
+              child: Stack(
+                children: [
+                  const Positioned(left: 4, top: 4, child: BackButton()),
+                  Center(child: Text(_status)),
+                ],
+              ),
+            )
+          : SpectatorMatchView(controller: controller, onLeave: () => Navigator.of(context).pop()),
     );
   }
 }

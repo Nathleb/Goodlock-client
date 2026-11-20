@@ -186,6 +186,25 @@ void main() {
     expect(key('cancel'), findsOneWidget);
   });
 
+  testWidgets('CELL-4: in the Keep, the opponent\'s faces cannot be tapped and never show a lock mark', (tester) async {
+    final theirsLocked = [
+      for (var i = 0; i < 4; i++) character('t$i', side: 1, slot: i, face: i == 1 ? hit : blankFace, locked: i == 0),
+    ];
+    await open(tester, state: stateOf(Phase.keep, mine: mine(), theirs: theirsLocked, preview: round()));
+    await tester.tap(key('face-t1'));
+    await tester.pump();
+
+    expect(controller.locks, isEmpty);
+    expect(key('lock-t0'), findsNothing);
+    expect(key('lock-t1'), findsNothing);
+  });
+
+  testWidgets('GAME-9: in the Keep, nothing says whether the opponent has confirmed', (tester) async {
+    await open(tester);
+    expect(find.textContaining('prêt'), findsNothing);
+    expect(find.textContaining('a confirmé'), findsNothing);
+  });
+
   testWidgets('FLOW-4: in Resolve, faces cannot be tapped, and the bar reads Resolve with no Confirm', (tester) async {
     await open(tester, resolving: true, phaseLabel: 'Round 1 · Résolution');
     await tester.tap(key('face-m2'));

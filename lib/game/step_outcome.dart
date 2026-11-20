@@ -193,9 +193,6 @@ String _partWord(String part) => switch (part) {
 };
 
 /// The words of one part of a face, with the value written on the face.
-///
-/// Duplicates in spirit `actionLabels` of `resolve_game.dart`, which imports Flame: that one goes away with the Flame
-/// Resolve scene.
 String _partText(FacePart p) {
   final duration = p.duration == null ? '' : ' (${p.duration} t.)';
   return switch (p.part) {
