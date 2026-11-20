@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 ///
 /// Playback moves one notch per [stepDelay] and stops on the stop notch: the last one (FLOW-5), or the
 /// `haltAt` notch given to [load] (FLOW-6). Every gesture (seek, fast forward, pause, [stop]) stops it.
-/// Each change notifies the listeners once; a call that changes nothing does not notify.
+/// Each change notifies the listeners once; [load] always notifies, any other call that changes nothing does not.
 class Playhead extends ChangeNotifier {
   Playhead({this._stepDelay = const Duration(milliseconds: 900)});
 
@@ -22,7 +22,7 @@ class Playhead extends ChangeNotifier {
   int get notch => _notch;
   int get notchCount => _notchCount;
   bool get playing => _timer != null;
-  bool get atEnd => _notchCount > 0 && _notch == _notchCount - 1;
+  bool get atEnd => _notch == _notchCount - 1;
 
   int get _lastNotch => _notchCount - 1;
   int get _stopNotch => _haltAt ?? _lastNotch;
@@ -52,7 +52,9 @@ class Playhead extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Moves one notch per [stepDelay] up to the stop notch; from the stop notch or beyond, starts again from 0.
+  /// Moves one notch per [stepDelay] up to the stop notch. A playhead on the stop notch or past it starts again
+  /// from 0 (TL-6): on the last notch, and with a `haltAt`, on that notch or anywhere after it (after a fast
+  /// forward, say).
   void play() {
     if (_notchCount == 0 || playing) return;
     if (_notch >= _stopNotch) _notch = 0;
@@ -74,9 +76,10 @@ class Playhead extends ChangeNotifier {
     _moveTo(_lastNotch);
   }
 
-  /// Dragging: [fraction] (0..1) along the timeline, snapped to the nearest notch.
+  /// Dragging: [fraction] (0..1) along the timeline, snapped to the nearest notch. A NaN fraction (a drag along
+  /// a track of no width) is ignored.
   void seek(double fraction) {
-    if (_notchCount == 0) return;
+    if (_notchCount == 0 || fraction.isNaN) return;
     _moveTo((fraction.clamp(0.0, 1.0) * _lastNotch).round());
   }
 

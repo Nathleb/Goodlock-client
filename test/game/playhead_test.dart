@@ -57,6 +57,37 @@ void main() {
       expect(() => Playhead().load(4, haltAt: 4), throwsArgumentError);
     });
 
+    test('a timeline of two notches loads and plays to its end', () {
+      fakeAsync((async) {
+        final p = Playhead()..load(2);
+        expect(p.notchCount, 2);
+        p.play();
+        async.elapse(step);
+        expect(p.notch, 1);
+        expect(p.atEnd, isTrue);
+        expect(p.playing, isFalse);
+      });
+    });
+
+    test('FLOW-6: haltAt can be the first notch after the start', () {
+      fakeAsync((async) {
+        final p = Playhead()..load(3, autoplay: true, haltAt: 1);
+        async.elapse(step * 3);
+        expect(p.notch, 1);
+        expect(p.playing, isFalse);
+      });
+    });
+
+    test('FLOW-6: a load without haltAt forgets the haltAt of the previous load', () {
+      fakeAsync((async) {
+        final p = Playhead()..load(6, haltAt: 2);
+        p.load(6, autoplay: true);
+        async.elapse(step * 5);
+        expect(p.notch, 5, reason: 'the playback goes to the last notch, not the stale haltAt');
+        expect(p.atEnd, isTrue);
+      });
+    });
+
     test('FLOW-4: autoplay starts the playback at once', () {
       fakeAsync((async) {
         final p = Playhead();
@@ -225,6 +256,16 @@ void main() {
       expect(count(), 1);
     });
 
+    test('changing the step delay while paused does not start the playback', () {
+      fakeAsync((async) {
+        final p = Playhead()..load(4);
+        p.stepDelay = const Duration(milliseconds: 200);
+        expect(p.playing, isFalse);
+        async.elapse(step * 3);
+        expect(p.notch, 0);
+      });
+    });
+
     test('the default step delay is 900 ms', () {
       expect(Playhead().stepDelay, step);
     });
@@ -334,6 +375,19 @@ void main() {
       expect(p.notch, 4);
       p.seek(-0.5);
       expect(p.notch, 0);
+    });
+
+    test('a NaN fraction is ignored: no move, no notification, the playback goes on', () {
+      fakeAsync((async) {
+        final p = Playhead()..load(5, autoplay: true);
+        final count = listen(p);
+        p.seek(double.nan);
+        expect(p.notch, 0);
+        expect(p.playing, isTrue);
+        expect(count(), 0);
+        async.elapse(step);
+        expect(p.notch, 1);
+      });
     });
 
     test('TL-6: dragging stops the playback', () {
