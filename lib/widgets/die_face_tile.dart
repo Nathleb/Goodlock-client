@@ -83,7 +83,10 @@ class DieFaceTile extends StatelessWidget {
 class TargetGrid extends StatelessWidget {
   final List<TargetGroup> groups;
   final Color color;
-  const TargetGrid({super.key, required this.groups, required this.color});
+
+  /// The side of one cell.
+  final double cellSize;
+  const TargetGrid({super.key, required this.groups, required this.color, this.cellSize = 12});
 
   static const actorSlot = 2;
 
@@ -99,8 +102,8 @@ class TargetGrid extends StatelessWidget {
       final hit = _hit(enemyRow, slot);
       final isActor = relative && !enemyRow && slot == actorSlot;
       return Container(
-        width: 12,
-        height: 12,
+        width: cellSize,
+        height: cellSize,
         margin: const EdgeInsets.all(1),
         decoration: BoxDecoration(
           color: hit ? color : Colors.white10,
