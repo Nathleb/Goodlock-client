@@ -1,6 +1,12 @@
 // What the board and the status bar show for one notch of a round (STEP-2..5).
 // Pure Dart (no Flutter import). It computes no outcome: it diffs the boards of the timeline around a step and
 // words the face that played.
+//
+// Wording: a quantity reads value first, in lower case ("9 dégâts", "1 dégât", "4 de soin", "+4 de bouclier"); a
+// stat or a state is a name, capitalised, followed by its value and its duration ("Puissance +3 · 2 t.",
+// "Poison · 2 t.").
+
+import 'dart:math' as math;
 
 import '../net/models.dart';
 import '../net/rules.dart';
@@ -16,7 +22,8 @@ class CellOutcome {
   /// The first part of the effect that reached the cell (Damage, Heal...): the board picks the color from it.
   final String part;
 
-  /// What the effect really did, in French: "−12", "bloqué", "+5", "Bouclier +4", "Étourdi · 1 t.", "raté"...
+  /// What the effect really did, in French: "−12", "bloqué", "+5", "+4 de bouclier", "Étourdi · 1 t.",
+  /// "Hâte retirée", "raté"...
   final String label;
   const CellOutcome(this.cell, this.characterId, this.part, this.label);
 }
@@ -32,9 +39,12 @@ class StepOutcome {
 
 /// The outcome of [notch] of [timeline]; [resolving] is false during a Keep, when the round is a preview.
 ///
-/// Known approximation: each target cell is matched against the board before the whole action. Cells are resolved
-/// just before each effect, so when an effect of the action has already swapped characters, a later effect's label
-/// can land on the character that stood on the cell before the swap.
+/// Known approximations: each target cell is matched against the board before the whole action, while the server
+/// resolves cells just before each effect.
+/// - When an effect of the action has already swapped characters, a later effect's label can land on the character
+///   that stood on the cell before the swap.
+/// - A target an earlier effect of the same action killed is still named in the caption of a later effect, as if it
+///   stood there; the label of its cell is right (it shows the HP lost over the whole action).
 StepOutcome stepOutcome(RoundTimeline timeline, int notch, {required bool resolving}) {
   final index = timeline.stepAt(notch);
   if (index == null) {
@@ -109,11 +119,12 @@ String _diff(CharacterView prev, CharacterView next) {
     if (hp < 0) '−${-hp}',
     if (hp > 0) '+$hp',
     if (hp == 0 && (shield < 0 || divineShieldSpent)) 'bloqué',
-    if (shield > 0) 'Bouclier +$shield',
+    if (shield > 0) '+$shield de bouclier',
     if (next.position != prev.position) 'déplacé',
     for (final stat in _keys(prev.stats, next.stats))
       if ((next.stats[stat] ?? 0) != (prev.stats[stat] ?? 0))
-        '${_statName(stat)} ${_signed((next.stats[stat] ?? 0) - (prev.stats[stat] ?? 0))}',
+        '${_statName(stat)} ${_signed((next.stats[stat] ?? 0) - (prev.stats[stat] ?? 0))}'
+            '${_rounds(_newDuration(stat, prev, next))}',
     for (final axis in _keys(prev.states, next.states))
       if ((next.states[axis] ?? 0) != (prev.states[axis] ?? 0) && !(axis == 'DIVINE_SHIELD' && divineShieldSpent))
         _stateLabel(axis, prev.states[axis] ?? 0, next.states[axis] ?? 0),
@@ -125,11 +136,32 @@ List<String> _keys(Map<String, int> a, Map<String, int> b) => ({...a.keys, ...b.
 
 String _signed(int n) => n < 0 ? '−${-n}' : '+$n';
 
-/// A state counter is a signed duration (STATE-1): its sign tells which state of the axis holds it.
-String _stateLabel(String axis, int prev, int next) {
-  final sign = next != 0 ? next.sign : prev.sign;
-  return '${_axisState(axis, sign)} · ${next.abs()} t.';
+/// " · 2 t.", the duration of a stat or a state; empty when there is none.
+String _rounds(int? duration) => duration == null ? '' : ' · $duration t.';
+
+/// The longest of the stat changes (STAT-2) that [next] holds on [stat] and [prev] did not: the duration of what the
+/// action gave; null when it gave none.
+int? _newDuration(String stat, CharacterView prev, CharacterView next) {
+  final held = [for (final m in prev.modifiers) (m.stat, m.value, m.roundsLeft)];
+  int? longest;
+  for (final m in next.modifiers) {
+    final isNew = !held.remove((m.stat, m.value, m.roundsLeft));
+    if (isNew && m.stat == stat) longest = math.max(longest ?? 0, m.roundsLeft);
+  }
+  return longest;
 }
+
+/// A state counter is a signed duration (STATE-1): its sign tells which state of the axis holds it. A counter an
+/// opposite state brought back to 0 names the state that is gone.
+String _stateLabel(String axis, int prev, int next) {
+  if (next == 0) return _removed(_axisState(axis, prev.sign));
+  return '${_axisState(axis, next.sign)}${_rounds(next.abs())}';
+}
+
+String _removed(String state) => switch (state) {
+  'Hâte' || 'Lenteur' || 'Régénération' => '$state retirée',
+  _ => '$state retiré',
+};
 
 String _axisState(String axis, int sign) => switch (axis) {
   'SPEED' => sign > 0 ? 'Hâte' : 'Lenteur',
@@ -167,8 +199,11 @@ String _describe(List<ResolvedEffect> effects, DieFace face, List<CharacterView>
   ].join(' ; ');
 }
 
-/// The face effect is trusted only when its parts are the ones logged: a timeline started from a stale board (a face
-/// rerolled since) is then worded from the log alone, without values or targeting.
+/// The face effect is trusted only when its parts are the ones logged; otherwise the effect is worded from the log
+/// alone, without values or targeting. This check does not detect a face rerolled into another face with the same
+/// part labels: the caption is right only when the start board carries the faces the log plays, which the
+/// production paths guarantee (the Keep board with its preview, and startOfResolve, which carries the faces played,
+/// with its log).
 String _clause(ResolvedEffect effect, FaceEffect? face, List<CharacterView> before) {
   final authored = face != null && _sameParts(face, effect) ? face : null;
   final parts = authored == null ? effect.parts.map(_partWord).join(' + ') : authored.parts.map(_partText).join(' + ');
@@ -196,19 +231,16 @@ String _partWord(String part) => switch (part) {
 };
 
 /// The words of one part of a face, with the value written on the face.
-String _partText(FacePart p) {
-  final duration = p.duration == null ? '' : ' (${p.duration} t.)';
-  return switch (p.part) {
-    'Damage' => '${p.magnitude} dégâts',
-    'FixedDamage' => '${p.magnitude} dégâts fixes',
-    'Heal' => 'soin ${p.magnitude}',
-    'Shield' => 'bouclier ${p.magnitude}',
-    'Swap' => 'échange',
-    'ApplyStat' => '${_statName(p.stat ?? '')} ${_signed(p.magnitude)}$duration',
-    'ApplyState' => '${_stateName(p.state ?? '')}$duration',
-    _ => '${p.part} ${p.magnitude}',
-  };
-}
+String _partText(FacePart p) => switch (p.part) {
+  'Damage' => p.magnitude < 2 ? '${p.magnitude} dégât' : '${p.magnitude} dégâts',
+  'FixedDamage' => p.magnitude < 2 ? '${p.magnitude} dégât fixe' : '${p.magnitude} dégâts fixes',
+  'Heal' => '${p.magnitude} de soin',
+  'Shield' => '${p.magnitude} de bouclier',
+  'Swap' => 'échange',
+  'ApplyStat' => '${_statName(p.stat ?? '')} ${_signed(p.magnitude)}${_rounds(p.duration)}',
+  'ApplyState' => '${_stateName(p.state ?? '')}${_rounds(p.duration)}',
+  _ => '${p.part} ${p.magnitude}',
+};
 
 /// A short French phrase for the cells a face aims at (TGT rules): RELATIVE offsets are read from the actor's cell,
 /// ABSOLUTE ones are slots.

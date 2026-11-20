@@ -113,7 +113,7 @@ void main() {
     test('STEP-2: a heal shows the HP really gained, a shield the points gained', () {
       const heal = FaceEffect(inFront, [FacePart('Heal', 9), FacePart('Shield', 4)]);
       final b = character('b', side: 1, slot: 0, hp: 15);
-      expect(labelOn(b, character('b', side: 1, slot: 0, hp: 20, shield: 4), heal), '+5 · Bouclier +4');
+      expect(labelOn(b, character('b', side: 1, slot: 0, hp: 20, shield: 4), heal), '+5 · +4 de bouclier');
     });
 
     test('STEP-2: a stat given shows its change of net value', () {
@@ -134,10 +134,10 @@ void main() {
       );
     });
 
-    test('STEP-2: a state cancelled down to 0 shows a duration of 0', () {
+    test('STEP-2: a state an opposite one brings back to 0 reads as removed', () {
       const slow = FaceEffect(inFront, [FacePart('ApplyState', 0, state: 'SLOW', duration: 1)]);
       final b = character('b', side: 1, slot: 0, states: {'SPEED': 1});
-      expect(labelOn(b, character('b', side: 1, slot: 0, states: {'SPEED': 0}), slow), 'Hâte · 0 t.');
+      expect(labelOn(b, character('b', side: 1, slot: 0, states: {'SPEED': 0}), slow), 'Hâte retirée');
     });
 
     test('STEP-2: a hit that also stuns shows both', () {
@@ -201,7 +201,7 @@ void main() {
       );
       expect(outcome.cells.map((c) => (c.characterId, c.part, c.label)), [
         ('b', 'Damage', '−15'),
-        ('a', 'Shield', 'Bouclier +3'),
+        ('a', 'Shield', '+3 de bouclier'),
       ]);
     });
 
@@ -237,6 +237,53 @@ void main() {
         ),
       );
       expect(intoEmpty.cells.map((c) => (c.characterId, c.label)), [('a', 'déplacé'), (null, 'déplacé')]);
+    });
+
+    String stateLabel(String axis, int prev, int next) {
+      const anyState = FaceEffect(inFront, [FacePart('ApplyState', 0, state: 'STUN', duration: 1)]);
+      final b = character('b', side: 1, slot: 0, states: {axis: prev});
+      return labelOn(b, character('b', side: 1, slot: 0, states: {axis: next}), anyState);
+    }
+
+    test('STEP-2, STATE-1: each axis names the state its counter now holds, with its duration', () {
+      expect(stateLabel('SPEED', 0, 2), 'Hâte · 2 t.');
+      expect(stateLabel('SPEED', 0, -1), 'Lenteur · 1 t.');
+      expect(stateLabel('SPEED', 1, -1), 'Lenteur · 1 t.');
+      expect(stateLabel('VITALITY', 0, 3), 'Régénération · 3 t.');
+      expect(stateLabel('VITALITY', 0, -2), 'Poison · 2 t.');
+      expect(stateLabel('VITALITY', -2, 1), 'Régénération · 1 t.');
+      expect(stateLabel('STUN', 0, 1), 'Étourdi · 1 t.');
+      expect(stateLabel('ROOT', 0, 2), 'Enraciné · 2 t.');
+      expect(stateLabel('DIVINE_SHIELD', 0, 1), 'Bouclier divin · 1 t.');
+      expect(stateLabel('OTHER', 0, 1), 'OTHER · 1 t.');
+    });
+
+    test('STEP-2, STATE-1: a counter brought back to 0 names the state that is gone', () {
+      expect(stateLabel('SPEED', 1, 0), 'Hâte retirée');
+      expect(stateLabel('SPEED', -2, 0), 'Lenteur retirée');
+      expect(stateLabel('VITALITY', 2, 0), 'Régénération retirée');
+      expect(stateLabel('VITALITY', -1, 0), 'Poison retiré');
+      expect(stateLabel('STUN', 1, 0), 'Étourdi retiré');
+      expect(stateLabel('ROOT', 1, 0), 'Enraciné retiré');
+      expect(stateLabel('OTHER', 1, 0), 'OTHER retiré');
+    });
+
+    test('STEP-2, STAT-2: a stat given shows its change of net value and the duration of the change', () {
+      const buff = FaceEffect(inFront, [FacePart('ApplyStat', 3, stat: 'POWER', duration: 2)]);
+      final b = character('b', side: 1, slot: 0, stats: {'POWER': 3}, modifiers: const [StatInstance('POWER', 3, 4)]);
+      final after = character(
+        'b',
+        side: 1,
+        slot: 0,
+        stats: {'POWER': 6, 'ARMOR': -1, 'SPEED': 1},
+        modifiers: const [
+          StatInstance('POWER', 3, 4),
+          StatInstance('ARMOR', -1, 3),
+          StatInstance('POWER', 3, 2),
+          StatInstance('POWER', 3, 1),
+        ],
+      );
+      expect(labelOn(b, after, buff), 'Armure −1 · 3 t. · Puissance +3 · 2 t. · SPEED +1');
     });
   });
 
@@ -368,8 +415,8 @@ void main() {
       const effect = FaceEffect(inFront, parts);
       expect(
         captionOf(faceOf([effect]), [resolved(effect, const [])]),
-        '1. Name a : 9 dégâts + 3 dégâts fixes + soin 4 + bouclier 5 + Armure −2 (2 t.) + Poison (3 t.) + échange, '
-        'en face → aucune cellule.',
+        '1. Name a : 9 dégâts + 3 dégâts fixes + 4 de soin + 5 de bouclier + Armure −2 · 2 t. + Poison · 3 t. + '
+        'échange, en face → aucune cellule.',
       );
     });
 
@@ -391,7 +438,7 @@ void main() {
           ],
           others: [b],
         ),
-        '1. Name a : 5 dégâts, en face → Name b ; bouclier 3, soi → Name a.',
+        '1. Name a : 5 dégâts, en face → Name b ; 3 de bouclier, soi → Name a.',
       );
     });
 
@@ -434,7 +481,7 @@ void main() {
     String targeting(List<TargetGroup> targets) {
       final effect = FaceEffect(targets, const [FacePart('Damage', 1)]);
       final caption = captionOf(faceOf([effect]), [resolved(effect, const [])]);
-      return caption.substring('1. Name a : 1 dégâts, '.length, caption.length - ' → aucune cellule.'.length);
+      return caption.substring('1. Name a : 1 dégât, '.length, caption.length - ' → aucune cellule.'.length);
     }
 
     test('STEP-5: the targeting is worded from the target groups of the face', () {
@@ -529,6 +576,108 @@ void main() {
         ]),
         'en face et soi',
       );
+    });
+
+    test('STEP-5: more phrases of the targeting', () {
+      expect(
+        targeting(const [
+          TargetGroup('ENEMY', 'RELATIVE', [-1, 0, 1]),
+        ]),
+        'en face et voisins',
+      );
+      expect(
+        targeting(const [
+          TargetGroup('ENEMY', 'RELATIVE', [0, 2]),
+        ]),
+        'en face et ennemis',
+      );
+      expect(
+        targeting(const [
+          TargetGroup('ALLY', 'RELATIVE', [-2]),
+        ]),
+        'alliés',
+      );
+      expect(
+        targeting(const [
+          TargetGroup('ALLY', 'ABSOLUTE', [3]),
+        ]),
+        'cellule alliée 3',
+      );
+      expect(
+        targeting(const [
+          TargetGroup('ENEMY', 'ABSOLUTE', [2, 1]),
+        ]),
+        'cellules ennemies 1, 2',
+      );
+      expect(
+        targeting(const [
+          TargetGroup('ENEMY', 'ABSOLUTE', [2, 2]),
+        ]),
+        'cellule ennemie 2',
+      );
+      expect(
+        targeting(const [
+          TargetGroup('ENEMY', 'ABSOLUTE', [0, 1, 2, 3, 5]),
+        ]),
+        'cellules ennemies 0, 1, 2, 3, 5',
+      );
+      expect(
+        targeting(const [
+          TargetGroup('ALLY', 'ABSOLUTE', [-1, 0, 1, 2, 3]),
+        ]),
+        'cellules alliées -1, 0, 1, 2, 3',
+      );
+    });
+
+    /// The words of [part] in the caption of a face that holds it alone.
+    String partText(FacePart part) {
+      final effect = FaceEffect(inFront, [part]);
+      final caption = captionOf(faceOf([effect]), [resolved(effect, const [])]);
+      return caption.substring('1. Name a : '.length, caption.length - ', en face → aucune cellule.'.length);
+    }
+
+    test('STEP-5: a quantity reads value first, in the singular below 2', () {
+      expect(partText(const FacePart('Damage', 1)), '1 dégât');
+      expect(partText(const FacePart('Damage', 2)), '2 dégâts');
+      expect(partText(const FacePart('FixedDamage', 1)), '1 dégât fixe');
+      expect(partText(const FacePart('FixedDamage', 2)), '2 dégâts fixes');
+      expect(partText(const FacePart('Heal', 1)), '1 de soin');
+      expect(partText(const FacePart('Shield', 1)), '1 de bouclier');
+      expect(partText(const FacePart('Swap', 0)), 'échange');
+      expect(partText(const FacePart('Other', 2)), 'Other 2');
+    });
+
+    test('STEP-5: a stat reads its name, its signed value and its duration', () {
+      expect(partText(const FacePart('ApplyStat', 3, stat: 'POWER', duration: 2)), 'Puissance +3 · 2 t.');
+      expect(partText(const FacePart('ApplyStat', -1, stat: 'ARMOR', duration: 1)), 'Armure −1 · 1 t.');
+      expect(partText(const FacePart('ApplyStat', 1, stat: 'OTHER')), 'OTHER +1');
+    });
+
+    test('STEP-5: a state reads its name and its duration', () {
+      String state(String name) => partText(FacePart('ApplyState', 0, state: name, duration: 2));
+      expect(state('HASTE'), 'Hâte · 2 t.');
+      expect(state('SLOW'), 'Lenteur · 2 t.');
+      expect(state('REGEN'), 'Régénération · 2 t.');
+      expect(state('POISON'), 'Poison · 2 t.');
+      expect(state('STUN'), 'Étourdi · 2 t.');
+      expect(state('ROOT'), 'Enraciné · 2 t.');
+      expect(state('DIVINE_SHIELD'), 'Bouclier divin · 2 t.');
+      expect(state('OTHER'), 'OTHER · 2 t.');
+      expect(partText(const FacePart('ApplyState', 0, state: 'STUN')), 'Étourdi');
+    });
+
+    test('STEP-5: worded from the log alone, each part has its own word', () {
+      String word(String part) => captionOf(blankFace, [
+        ResolvedEffect([part], const []),
+      ]).substring('1. Name a : '.length);
+      expect(word('Damage'), 'dégâts → aucune cellule.');
+      expect(word('FixedDamage'), 'dégâts fixes → aucune cellule.');
+      expect(word('Heal'), 'soin → aucune cellule.');
+      expect(word('Shield'), 'bouclier → aucune cellule.');
+      expect(word('Swap'), 'échange → aucune cellule.');
+      expect(word('ApplyStat'), 'stat → aucune cellule.');
+      expect(word('ApplyState'), 'état → aucune cellule.');
+      expect(word('Other'), 'Other → aucune cellule.');
     });
   });
 

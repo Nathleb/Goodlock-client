@@ -14,6 +14,7 @@ CharacterView character(
   int faceIndex = 0,
   Map<String, int> states = const {},
   Map<String, int> stats = const {},
+  List<StatInstance> modifiers = const [],
   int shield = 0,
 }) =>
     CharacterView(
@@ -31,6 +32,7 @@ CharacterView character(
       position: Cell(side, slot),
       states: states,
       stats: stats,
+      modifiers: modifiers,
     );
 
 /// A deck of six catalog characters, ids `<prefix>0` to `<prefix>5`.
