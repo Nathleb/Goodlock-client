@@ -79,6 +79,7 @@ void main() {
     expect(find.textContaining('chaque bot garde 4 de ses 6'), findsOneWidget);
     expect(key('clock-me'), findsOneWidget);
     expect(key('confirm'), findsNothing);
+    expect(find.byTooltip('Abandonner'), findsNothing, reason: 'a spectator has no match to concede');
 
     link.server(stateOf(Phase.placement, mine: [for (var i = 0; i < 4; i++) character('m$i', side: 0, slot: i)]));
     await tester.pump();
@@ -98,6 +99,7 @@ void main() {
     expect(caption(tester), 'Début du round.');
     expect(key('confirm'), findsNothing);
     expect(key('cancel'), findsNothing);
+    expect(find.byTooltip('Abandonner'), findsNothing, reason: 'a spectator has no match to concede');
     expect(key('clock-me'), findsOneWidget);
 
     await tester.pump(step);

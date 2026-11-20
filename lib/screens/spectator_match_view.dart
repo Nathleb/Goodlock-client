@@ -100,12 +100,13 @@ class _SpectatorMatchViewState extends State<SpectatorMatchView> {
         resolving: true,
         phaseLabel: 'Round ${_round!.round + 1} · Résolution',
         initiativePlayerIndex: _round!.initiativePlayerIndex,
+        canConcede: false,
       );
     }
     return Column(
       children: [
-        // A spectator has nothing to confirm: the bar of the Resolve, with no button.
-        MatchBar(controller: _c, resolving: true),
+        // A spectator has nothing to confirm nor to concede: the bar of the Resolve, with no button.
+        MatchBar(controller: _c, resolving: true, canConcede: false),
         Expanded(
           child: Center(child: Text(_describe(_c.state), textAlign: TextAlign.center)),
         ),

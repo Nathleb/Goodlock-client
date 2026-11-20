@@ -160,6 +160,25 @@ void main() {
     expect(captionText(tester), 'Fin du round si personne ne relance.');
   });
 
+  testWidgets('STEP-5: the caption holds on one line, and a tap on it shows it whole', (tester) async {
+    await open(tester);
+    await at(tester, 1);
+    final full = captionText(tester);
+    final style = tester.widget<Text>(caption()).style!;
+    expect(tester.widget<Text>(caption()).maxLines, 1);
+    expect(tester.getSize(caption()).height, lessThan(style.fontSize! * 2), reason: 'one line');
+
+    await tester.tap(caption());
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(full), findsNWidgets(2), reason: 'the caption, and the tooltip with the whole of it');
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+  });
+
+  testWidgets('AWAY-1: the status bar of a player offers to concede', (tester) async {
+    await open(tester);
+    expect(find.byTooltip('Abandonner'), findsOneWidget);
+  });
+
   testWidgets('LAYOUT-2: the status bar keeps the round, the rerolls left and the Confirm button in the Keep', (
     tester,
   ) async {

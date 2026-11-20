@@ -5,13 +5,13 @@ import '../net/models.dart';
 import 'match_clocks_bar.dart';
 
 /// The status bar of the match screens (LAYOUT-2): the phase and the round, who holds the initiative, the
-/// caption of the step on display (STEP-5), both clocks, concede, and the Confirm button, which reads Cancel
+/// caption of the step on display (STEP-5), both clocks, concede (not for a spectator), and the Confirm button, which reads Cancel
 /// once confirmed (GAME-8). During Resolve, and for a spectator, there is nothing to confirm: no button, unless the
 /// next Keep is already there, when the button skips to it ([onSkipToKeep]).
 class MatchBar extends StatelessWidget {
   final HumanMatchController controller;
 
-  /// The step on display, in one or two lines between the title and the clocks; null: no caption.
+  /// The step on display, in one line between the title and the clocks (a tap shows it whole); null: no caption.
   final String? caption;
 
   /// Replaces the title of the phase, e.g. during Resolve, when the controller may already hold the next Keep.
@@ -23,6 +23,9 @@ class MatchBar extends StatelessWidget {
 
   /// KEEP-3: shown during Resolve once the next Keep has come, where Confirm would be; null: no such button.
   final VoidCallback? onSkipToKeep;
+
+  /// Whether the concede button shows; a spectator has no match to concede.
+  final bool canConcede;
   const MatchBar({
     super.key,
     required this.controller,
@@ -31,6 +34,7 @@ class MatchBar extends StatelessWidget {
     this.resolving = false,
     this.initiativePlayerIndex,
     this.onSkipToKeep,
+    this.canConcede = true,
   });
 
   String _title(GameStateView? s) => switch (s?.phase) {
@@ -70,12 +74,17 @@ class MatchBar extends StatelessWidget {
                 flex: 3,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    caption!,
-                    key: const ValueKey('step-caption'),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall,
+                  child: Tooltip(
+                    // STEP-5: one line; a tap shows it whole.
+                    triggerMode: TooltipTriggerMode.tap,
+                    message: caption,
+                    child: Text(
+                      caption!,
+                      key: const ValueKey('step-caption'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ),
                 ),
               ),
@@ -86,11 +95,12 @@ class MatchBar extends StatelessWidget {
                 child: SizedBox(width: caption == null ? 640 : 440, child: MatchClocksBar(clocks: controller.clocks)),
               ),
             ),
-            IconButton(
-              tooltip: 'Abandonner',
-              icon: const Icon(Icons.flag_outlined),
-              onPressed: () => _confirmConcede(context),
-            ),
+            if (canConcede)
+              IconButton(
+                tooltip: 'Abandonner',
+                icon: const Icon(Icons.flag_outlined),
+                onPressed: () => _confirmConcede(context),
+              ),
             const SizedBox(width: 4),
             if (onSkipToKeep != null)
               FilledButton(

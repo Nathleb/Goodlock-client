@@ -4,9 +4,9 @@ Guidance for Claude Code in this repository.
 
 ## Project
 
-`Goodlock-app` is the mobile client for Goodlock, a tactical PvP dice game. **Flutter** for the app
-screens (login, collection, decks, lobby), **Flame** for the game scenes (board, Resolve animation).
-Status: **prototype** (Oct 2026) to validate Flutter + Flame on a real phone before replacing the old
+`Goodlock-app` is the mobile client for Goodlock, a tactical PvP dice game. **Flutter** (Material 3)
+for every screen, the match screen included (board, timeline, Keep preview and Resolve replay).
+Status: **prototype** (Oct 2026) to validate Flutter on a real phone before replacing the old
 React/Capacitor client (`Goodlock-frontend`).
 
 The backend is `../Goodlock-back` (NestJS + Socket.IO 4). It is the **source of truth for the protocol**:
@@ -55,7 +55,8 @@ Flutter SDK: `~/development/flutter` (on `PATH` via `~/.zshrc`). Android SDK: `~
 ```
 lib/net/      REST + Socket.IO client, protocol models (fromJson)
 lib/screens/  Flutter screens (Material 3, forced landscape, touch targets >= 44 px)
-lib/game/     Flame components and scenes
+lib/game/     match logic without widgets: controller, round timeline, step outcome, playhead, round replay, clocks
+lib/widgets/  reusable widgets (match board, timeline bar, status bar, die view, cards)
 tool/         dev scripts (headless bot match, phone.sh: wireless-debugging loop)
 test/         unit/widget tests; test/fixtures/ holds real payloads recorded from the backend;
               test/protocol/ holds the synced backend schema and its validation helpers
@@ -66,7 +67,7 @@ test/         unit/widget tests; test/fixtures/ holds real payloads recorded fro
 - Mobile first: judge feel on a device build, not on an emulator or desktop.
 - Forced landscape, full screen (immersive). The combat board is two facing columns: the viewer on the
   left, the opponent on the right, slot 0 on top, the centre band free for captions and controls.
-- The server is the source of truth for every outcome and every die roll: the client animates what it sent. The only local computation is the preview of the round from the locked dice (the rules are deterministic), which is recomputed on every lock or reroll and never replaces what the server resolves.
+- The server is the source of truth for every outcome and every die roll: the client animates what it sent. The round preview comes from the server in every Keep state (preview); the client computes no outcome.
 - Protocol models mirror backend DTOs exactly; parsing is unit-tested against recorded payloads. The backend's `protocol/protocol.schema.json` is copied to `test/protocol/` by `tool/sync_protocol.sh` (run it after a protocol change, then re-record the fixtures with `bot_match --record`); the fixtures and the hand-written payloads of the tests are validated against it.
 - Game sizes (deck 6, team 4, board 5 cells with one empty) live in `lib/net/rules.dart`, mirrored from the
   backend; position a character by `position.slot`, never by its index in `team`.

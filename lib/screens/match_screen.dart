@@ -30,6 +30,9 @@ class MatchScreen extends StatelessWidget {
 
   /// See [MatchBar.onSkipToKeep].
   final VoidCallback? onSkipToKeep;
+
+  /// See [MatchBar.canConcede].
+  final bool canConcede;
   const MatchScreen({
     super.key,
     required this.controller,
@@ -39,6 +42,7 @@ class MatchScreen extends StatelessWidget {
     this.phaseLabel,
     this.initiativePlayerIndex,
     this.onSkipToKeep,
+    this.canConcede = true,
   });
 
   @override
@@ -59,6 +63,7 @@ class MatchScreen extends StatelessWidget {
               resolving: resolving,
               initiativePlayerIndex: initiativePlayerIndex,
               onSkipToKeep: onSkipToKeep,
+              canConcede: canConcede,
             ),
             Expanded(
               child: MatchBoard(

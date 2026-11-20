@@ -5,7 +5,8 @@ description: Conventions for Goodlock-app Flutter screens (login, collection, de
 
 # Flutter screens
 
-Screens are plain Material 3 widgets. The game board is not a screen: it is Flame (see the `flame-scenes` skill).
+Screens are plain Material 3 widgets. The game board is a widget too (`lib/widgets/match_board.dart`), shown by
+the match screen (`lib/screens/match_screen.dart`); its logic without widgets lives in `lib/game/`.
 
 ## Layout
 
@@ -34,7 +35,7 @@ Screens are plain Material 3 widgets. The game board is not a screen: it is Flam
 - Non-visual logic is TDD: red test first. Parsing is tested against recorded payloads in
   `test/fixtures/`, not hand-written JSON.
 - A screen with behavior gets a widget test in `test/screens/` (see `login_screen_test.dart`).
-  Pump with a landscape size, as `test/game/resolve_game_test.dart` does.
+  Pump with a landscape size, as `test/screens/match_screen_test.dart` does.
 - Pure layout is judged on a phone, not in a test: build with `tool/phone.sh run` and look.
   An emulator or desktop window does not tell you how it feels.
 
