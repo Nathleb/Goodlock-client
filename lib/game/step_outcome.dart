@@ -51,6 +51,9 @@ StepOutcome stepOutcome(RoundTimeline timeline, int notch, {required bool resolv
   final after = timeline.boardAt(notch);
   final actor = _byId(before, token.characterId)?.name ?? token.characterId;
   final number = '$notch. $actor : ';
+  if (step.unplayed) {
+    return StepOutcome(token.characterId, step.skipped, const [], '${number}pas jouée, le match est décidé.');
+  }
   if (step.skipped) {
     final why = token.status == TokenStatus.dead ? 'mort avant son tour' : 'action annulée (étourdi)';
     return StepOutcome(token.characterId, true, const [], '$number$why.');

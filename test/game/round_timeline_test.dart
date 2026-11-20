@@ -19,6 +19,9 @@ const hit = DieFace('hit', 1, [
 ResolveStep step(String actor, List<CharacterView> after, {bool skipped = false}) =>
     ResolveStep(actor, skipped, const [], [for (final c in after) ResolveChange(c.id, c)], unplayed: false);
 
+/// A step the decided match never reached: skipped, with no effects and no changes.
+ResolveStep unplayed(String actor) => ResolveStep(actor, true, const [], const [], unplayed: true);
+
 List<(String, int, int, Cell)> summary(List<CharacterView> board) => [
   for (final c in board) (c.id, c.hp, c.shield, c.position),
 ];
@@ -79,6 +82,21 @@ void main() {
 
       expect(timeline.tokens.single.status, TokenStatus.stunned);
     });
+
+    test('TL-3, END-1: a step the decided match never reached is unplayed, whether its actor lives or not', () {
+      final a = character('a', side: 0, slot: 0, face: hit);
+      final b = character('b', side: 1, slot: 0, hp: 3, face: hit);
+      final timeline = RoundTimeline.build(
+        [a, b],
+        [
+          step('a', [character('b', side: 1, slot: 0, hp: 0, face: hit)]),
+          unplayed('b'),
+          unplayed('a'),
+        ],
+      );
+
+      expect(timeline.tokens.map((t) => t.status), [TokenStatus.plays, TokenStatus.unplayed, TokenStatus.unplayed]);
+    });
   });
 
   group('TL-4: boards', () {
@@ -113,53 +131,82 @@ void main() {
       ]);
     });
 
-    test('TL-4: the last board is the board after the last action with the shields gone', () {
+    test('TL-4: the last board is the board after the last action, shields kept', () {
       expect(summary(timeline.boardAt(3)), [
         ('a', 20, 0, const Cell(0, 0)),
-        ('b', 9, 0, const Cell(1, 1)),
+        ('b', 9, 2, const Cell(1, 1)),
         ('c', 20, 0, const Cell(1, 0)),
       ]);
     });
 
-    test('TL-4: an empty log gives a start notch and an end notch', () {
+    test('TL-4: an empty log gives a start notch and an end notch that shows the start board', () {
       final empty = RoundTimeline.build([b], const []);
       expect(empty.notchCount, 2);
-      expect(summary(empty.boardAt(1)), [('b', 10, 0, const Cell(1, 0))]);
+      expect(summary(empty.boardAt(1)), [('b', 10, 4, const Cell(1, 0))]);
+    });
+
+    test('TL-4: an unplayed step leaves the board as it was', () {
+      final decided = RoundTimeline.build([a, b], [log.first, unplayed('b')]);
+      expect(decided.notchCount, 4);
+      expect(summary(decided.boardAt(2)), summary(decided.boardAt(1)));
+      expect(summary(decided.boardAt(3)), summary(decided.boardAt(1)));
     });
 
     test('TL-4: the start and end notches play no step, the others play the step before them', () {
       expect([for (var n = 0; n < timeline.notchCount; n++) timeline.stepAt(n)], [null, 0, 1, null]);
     });
 
-    test('TL-4: a character killed stays on the boards that follow, with 0 hp', () {
+    test('TL-4: a character killed stays on the boards that follow, with 0 hp, at the cell of its last change', () {
       final killed = RoundTimeline.build(
-        [a, b],
+        [a, b, c],
         [
-          step('a', [character('b', side: 1, slot: 0, hp: -3)]),
+          step('c', [character('c', side: 1, slot: 0), character('b', side: 1, slot: 1, shield: 4)]),
+          step('a', [character('b', side: 1, slot: 1, hp: -3)]),
         ],
       );
-      expect(summary(killed.boardAt(1)), [('a', 20, 0, const Cell(0, 0)), ('b', 0, 0, const Cell(1, 0))]);
-      expect(killed.boardAt(2).last.isDead, isTrue);
+      expect(summary(killed.boardAt(2)), [
+        ('a', 20, 0, const Cell(0, 0)),
+        ('b', 0, 0, const Cell(1, 1)),
+        ('c', 20, 0, const Cell(1, 0)),
+      ]);
+      expect(summary(killed.boardAt(3)), summary(killed.boardAt(2)));
+    });
+
+    test('a step whose actor is not on the start board is refused', () {
+      expect(() => RoundTimeline.build([a], [step('b', const [])]), throwsArgumentError);
+    });
+
+    test('a change on a character that is not on the start board is ignored', () {
+      final ignored = RoundTimeline.build(
+        [a],
+        [
+          step('a', [character('x', side: 1, slot: 0, hp: 1), character('a', side: 0, slot: 0, hp: 7)]),
+        ],
+      );
+      expect(summary(ignored.boardAt(1)), [('a', 7, 0, const Cell(0, 0))]);
+      expect(summary(ignored.boardAt(2)), [('a', 7, 0, const Cell(0, 0))]);
     });
   });
 
   test('TL-1, TL-4: a recorded round gives one token per logged action and ends on the recorded state', () {
-    List<Json> load(String name) =>
-        (jsonDecode(File('test/fixtures/$name.json').readAsStringSync()) as List).cast<Json>();
-    final starts = load('round_start').map(GameStateView.fromJson).toList();
-    final rounds = load('round_resolved').map(RoundResolved.fromJson).toList();
+    final rounds = (jsonDecode(File('test/fixtures/round_resolved.json').readAsStringSync()) as List)
+        .cast<Json>()
+        .map(RoundResolved.fromJson)
+        .toList();
 
     for (var i = 0; i < rounds.length; i++) {
-      final start = starts[i].players.expand((p) => p.team).toList();
+      // The board the Resolve plays from, as the match controller takes it.
+      final start = rounds[i].startOfResolve.players.expand((p) => p.team).toList();
       final log = rounds[i].resolveLog;
       final timeline = RoundTimeline.build(start, log);
 
       expect(timeline.tokens.map((t) => t.characterId), log.map((s) => s.characterId), reason: 'round ${i + 1}');
-      final afterLast = {for (final c in timeline.boardAt(timeline.notchCount - 2)) c.id: (c.hp, c.shield)};
+      final last = timeline.boardAt(timeline.notchCount - 1);
+      expect(summary(last), summary(timeline.boardAt(timeline.notchCount - 2)), reason: 'round ${i + 1}');
+      final atEnd = {for (final c in last) c.id: (c.hp, c.shield, c.position)};
       for (final c in rounds[i].gameState.players.expand((p) => p.team)) {
-        expect(afterLast[c.id], (c.hp, c.shield), reason: '${c.name} after round ${i + 1}');
+        expect(atEnd[c.id], (c.hp, c.shield, c.position), reason: '${c.name} after round ${i + 1}');
       }
-      expect(timeline.boardAt(timeline.notchCount - 1).every((c) => c.shield == 0), isTrue, reason: 'round ${i + 1}');
     }
   });
 }

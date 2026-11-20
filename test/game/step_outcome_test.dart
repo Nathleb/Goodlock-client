@@ -50,7 +50,7 @@ String captionOf(DieFace face, List<ResolvedEffect> effects, {List<CharacterView
 }
 
 void main() {
-  test('TL-4: a timeline keeps the steps of its log, one per token', () {
+  test('a timeline keeps its log: steps[i] is the action of tokens[i]', () {
     final a = character('a', side: 0, slot: 0);
     final log = [skips('a'), acts('a', const [], const [])];
     expect(RoundTimeline.build([a], log).steps, log);
@@ -105,7 +105,7 @@ void main() {
       expect(labelOn(b, character('b', side: 1, slot: 0, shield: 5), damage), 'bloqué');
     });
 
-    test('STEP-2, STATE-6: a hit Divine Shield stops reads "bloqué"', () {
+    test('STEP-2: a hit that spends a Divine Shield and takes no HP reads "bloqué"', () {
       final b = character('b', side: 1, slot: 0, states: {'DIVINE_SHIELD': 1});
       expect(labelOn(b, character('b', side: 1, slot: 0, states: {'DIVINE_SHIELD': 0}), damage), 'bloqué');
     });
@@ -303,6 +303,27 @@ void main() {
       expect(outcome.skipped, isTrue);
       expect(outcome.cells, isEmpty);
       expect(outcome.caption, '2. Name b : mort avant son tour.');
+    });
+
+    test('STEP-4, END-1: an action the decided match never reached says so, with no target cell', () {
+      final a = character(
+        'a',
+        side: 0,
+        slot: 0,
+        face: faceOf([
+          const FaceEffect(inFront, [FacePart('Damage', 5)]),
+        ]),
+      );
+      final b = character('b', side: 1, slot: 0);
+      final timeline = RoundTimeline.build(
+        [a, b],
+        [acts('b', const [], const []), const ResolveStep('a', true, [], [], unplayed: true)],
+      );
+      final outcome = stepOutcome(timeline, 2, resolving: true);
+      expect(outcome.actorId, 'a');
+      expect(outcome.skipped, isTrue);
+      expect(outcome.cells, isEmpty);
+      expect(outcome.caption, '2. Name a : pas jouée, le match est décidé.');
     });
   });
 
@@ -511,22 +532,60 @@ void main() {
     });
   });
 
-  test('STEP-1..5: every notch of a recorded round gives a caption, in Keep and in Resolve', () {
+  group('STEP-1..5: recorded rounds', () {
     List<Json> load(String name) =>
         (jsonDecode(File('test/fixtures/$name.json').readAsStringSync()) as List).cast<Json>();
-    final starts = load('round_start').map(GameStateView.fromJson).toList();
+    final keeps = load('round_start').map(GameStateView.fromJson).toList();
     final rounds = load('round_resolved').map(RoundResolved.fromJson).toList();
+    List<CharacterView> boardOf(GameStateView state) => state.players.expand((p) => p.team).toList();
 
-    for (var i = 0; i < rounds.length; i++) {
-      final timeline = RoundTimeline.build(starts[i].players.expand((p) => p.team).toList(), rounds[i].resolveLog);
-      for (var n = 0; n < timeline.notchCount; n++) {
-        for (final resolving in [false, true]) {
-          final outcome = stepOutcome(timeline, n, resolving: resolving);
-          expect(outcome.caption, isNotEmpty, reason: 'round ${i + 1}, notch $n');
-          expect(outcome.caption, isNot(contains('null')), reason: 'round ${i + 1}, notch $n');
-          expect(outcome.cells.every((c) => c.label.isNotEmpty), isTrue, reason: 'round ${i + 1}, notch $n');
+    // The timelines of the production paths: the first Keep board with its preview, and the Resolve board with
+    // its log.
+    final keepTimelines = [for (final k in keeps) RoundTimeline.build(boardOf(k), k.preview)];
+    final resolveTimelines = [for (final r in rounds) RoundTimeline.build(boardOf(r.startOfResolve), r.resolveLog)];
+
+    test('STEP-1..5: every notch of a recorded round gives a caption, in Keep and in Resolve', () {
+      for (final (timelines, resolving) in [(keepTimelines, false), (resolveTimelines, true)]) {
+        for (var i = 0; i < timelines.length; i++) {
+          final timeline = timelines[i];
+          for (var n = 0; n < timeline.notchCount; n++) {
+            final outcome = stepOutcome(timeline, n, resolving: resolving);
+            final reason = '${resolving ? 'Resolve' : 'Keep'} ${i + 1}, notch $n';
+            expect(outcome.caption, isNotEmpty, reason: reason);
+            expect(outcome.caption, isNot(contains('null')), reason: reason);
+            expect(outcome.cells.every((c) => c.label.isNotEmpty), isTrue, reason: reason);
+          }
         }
       }
-    }
+    });
+
+    test('STEP-5: a recorded action is worded from its face, with the values and the targeting it carries', () {
+      var damages = 0;
+      for (final (timelines, resolving) in [(keepTimelines, false), (resolveTimelines, true)]) {
+        for (var i = 0; i < timelines.length; i++) {
+          final timeline = timelines[i];
+          for (var s = 0; s < timeline.steps.length; s++) {
+            final step = timeline.steps[s];
+            if (step.skipped || step.effects.isEmpty) continue;
+            final face = timeline.tokens[s].face;
+            final caption = stepOutcome(timeline, s + 1, resolving: resolving).caption;
+            final reason = '${resolving ? 'Resolve' : 'Keep'} ${i + 1}, step ${s + 1}: $caption';
+            final clauses = caption.split(' ; ');
+            expect(clauses.length, step.effects.length, reason: reason);
+            for (var e = 0; e < step.effects.length; e++) {
+              final parts = face.effects[e].parts;
+              expect(parts.map((p) => p.part), step.effects[e].parts, reason: reason);
+              // The fallback wording, from the log alone, has no targeting before the arrow.
+              expect(clauses[e].split(' → ').first, contains(', '), reason: reason);
+              for (final p in parts.where((p) => p.part == 'Damage')) {
+                expect(clauses[e], contains('${p.magnitude} dégâts'), reason: reason);
+                damages++;
+              }
+            }
+          }
+        }
+      }
+      expect(damages, greaterThan(10), reason: 'the recorded rounds play Damage faces');
+    });
   });
 }

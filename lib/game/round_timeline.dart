@@ -2,10 +2,9 @@
 // Pure Dart (no Flutter import). It only applies what the server sent: it computes no outcome.
 
 import '../net/models.dart';
-import 'playback.dart';
 
-/// Why a token's action plays or not (TL-3).
-enum TokenStatus { plays, blank, stunned, dead }
+/// Why a token's action plays or not (TL-3). [unplayed]: the match was decided before its turn (END-1).
+enum TokenStatus { plays, blank, stunned, dead, unplayed }
 
 /// One action of the round, in resolution order (TL-1).
 class TimelineToken {
@@ -17,10 +16,13 @@ class TimelineToken {
 }
 
 /// The notches of a round (TL-4): notch 0 is the board before any action, notch i (1..tokens.length) the board
-/// after token i-1, and the last notch the end of the round, shields reset.
+/// after token i-1, and the last notch the end of the round. The last board is the board after the last action, as
+/// it stands: the client computes no end-of-round step (shields stay, durations do not count down).
 ///
-/// Every board lists the characters of the start board, in its order. A character killed during the round stays
-/// on the boards that follow it, with 0 hp, so the board can darken it.
+/// Every board lists the characters of the start board, in its order, and only them: a change on any other
+/// character is ignored. A character killed during the round stays on the boards that follow it, with 0 hp, at
+/// the cell of its last change; the screen takes it off the board ([playersFromBoard]). An unplayed step changes
+/// nothing.
 class RoundTimeline {
   final List<TimelineToken> tokens;
   final List<List<CharacterView>> boards;
@@ -52,7 +54,7 @@ class RoundTimeline {
       }
       boards.add(List.unmodifiable([for (final c in start) state[c.id]!]));
     }
-    boards.add(List.unmodifiable(startOfNextRound(boards.last)));
+    boards.add(boards.last);
     return RoundTimeline._(List.unmodifiable(tokens), List.unmodifiable(boards), List.unmodifiable(log));
   }
 
@@ -64,8 +66,10 @@ class RoundTimeline {
   int? stepAt(int notch) => notch == 0 || notch == notchCount - 1 ? null : notch - 1;
 }
 
-/// Judged on the state before the step: a skipped action is the actor's death or a stun.
+/// Judged on the state before the step: a skipped action is the actor's death or a stun, unless the match was
+/// decided before its turn.
 TokenStatus _status(ResolveStep step, DieFace face, {required bool isDead}) {
+  if (step.unplayed) return TokenStatus.unplayed;
   if (step.skipped) return isDead ? TokenStatus.dead : TokenStatus.stunned;
   return face.effects.isEmpty ? TokenStatus.blank : TokenStatus.plays;
 }
