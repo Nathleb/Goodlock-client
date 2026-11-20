@@ -54,6 +54,7 @@ void main() {
     GameStateView? state,
     bool resolving = false,
     String? phaseLabel,
+    VoidCallback? onSkipToKeep,
     Size size = const Size(2400, 1080),
     double dpr = 2.625,
   }) async {
@@ -76,6 +77,7 @@ void main() {
             timeline: timeline,
             resolving: resolving,
             phaseLabel: phaseLabel,
+            onSkipToKeep: onSkipToKeep,
           ),
         ),
       ),
@@ -116,6 +118,27 @@ void main() {
       });
     }
   }
+
+  testWidgets('KEEP-3: in Resolve, the skip button stands where Confirm would, fits a small phone, and skips', (
+    tester,
+  ) async {
+    var skipped = 0;
+    await open(
+      tester,
+      size: const Size(640, 360),
+      dpr: 1,
+      resolving: true,
+      phaseLabel: 'Round 1 · Résolution',
+      onSkipToKeep: () => skipped++,
+    );
+    for (var notch = 0; notch < 5; notch++) {
+      await at(tester, notch);
+      expect(tester.takeException(), isNull, reason: 'notch $notch');
+    }
+    expect(key('confirm'), findsNothing);
+    await tester.tap(key('skip-to-keep'));
+    expect(skipped, 1);
+  });
 
   testWidgets('TL-1: the timeline shows the round, one token per action', (tester) async {
     await open(tester);

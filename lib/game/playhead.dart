@@ -7,8 +7,8 @@ import 'package:flutter/foundation.dart';
 
 /// A notch index along a timeline of [notchCount] notches, and the playback that moves it (TL-6).
 ///
-/// Playback moves one notch per [stepDelay] and stops on the stop notch: the last one (FLOW-5), or the
-/// `haltAt` notch given to [load] (FLOW-6). Every gesture (seek, fast forward, pause, [stop]) stops it.
+/// Playback moves one notch per [stepDelay] and stops on the [stopNotch]: the last one (FLOW-5), or the
+/// [haltAt] notch, given to [load] or set later (FLOW-6). Every gesture (seek, fast forward, pause, [stop]) stops it.
 /// Each change notifies the listeners once; [load] always notifies, any other call that changes nothing does not.
 class Playhead extends ChangeNotifier {
   Playhead({this._stepDelay = const Duration(milliseconds: 900)});
@@ -24,8 +24,23 @@ class Playhead extends ChangeNotifier {
   bool get playing => _timer != null;
   bool get atEnd => _notch == _notchCount - 1;
 
+  /// The notch the playback stops on: [haltAt], or the last notch.
+  int get stopNotch => _haltAt ?? _lastNotch;
+
+  int? get haltAt => _haltAt;
+
+  /// FLOW-6: the playback stops on [value] instead of the last notch, e.g. once a game over that came after the
+  /// playback started tells the round ended the match. A playhead already past it ignores it; a playback on it
+  /// stops there. Same range as `load`'s `haltAt`.
+  set haltAt(int? value) {
+    _checkHaltAt(value, _notchCount);
+    if (value == _haltAt || (value != null && _notch > value)) return;
+    _haltAt = value;
+    if (_notch == value) _cancelTimer();
+    notifyListeners();
+  }
+
   int get _lastNotch => _notchCount - 1;
-  int get _stopNotch => _haltAt ?? _lastNotch;
 
   Duration get stepDelay => _stepDelay;
 
@@ -41,9 +56,7 @@ class Playhead extends ChangeNotifier {
   /// (FLOW-4). The playback then stops on [haltAt] instead of the last notch (FLOW-6).
   void load(int notchCount, {bool autoplay = false, int? haltAt}) {
     if (notchCount < 2) throw ArgumentError.value(notchCount, 'notchCount', 'must be at least 2');
-    if (haltAt != null && (haltAt < 1 || haltAt >= notchCount)) {
-      throw ArgumentError.value(haltAt, 'haltAt', 'must be in 1..${notchCount - 1}');
-    }
+    _checkHaltAt(haltAt, notchCount);
     _cancelTimer();
     _notchCount = notchCount;
     _haltAt = haltAt;
@@ -57,7 +70,7 @@ class Playhead extends ChangeNotifier {
   /// forward, say).
   void play() {
     if (_notchCount == 0 || playing) return;
-    if (_notch >= _stopNotch) _notch = 0;
+    if (_notch >= stopNotch) _notch = 0;
     _startTimer();
     notifyListeners();
   }
@@ -98,6 +111,12 @@ class Playhead extends ChangeNotifier {
     super.dispose();
   }
 
+  static void _checkHaltAt(int? haltAt, int notchCount) {
+    if (haltAt != null && (haltAt < 1 || haltAt >= notchCount)) {
+      throw ArgumentError.value(haltAt, 'haltAt', 'must be in 1..${notchCount - 1}');
+    }
+  }
+
   void _moveTo(int notch) {
     if (notch == _notch && !playing) return;
     _cancelTimer();
@@ -117,7 +136,7 @@ class Playhead extends ChangeNotifier {
 
   void _advance() {
     _notch++;
-    if (_notch >= _stopNotch) _cancelTimer();
+    if (_notch >= stopNotch) _cancelTimer();
     notifyListeners();
   }
 }

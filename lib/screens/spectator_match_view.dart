@@ -99,6 +99,7 @@ class _SpectatorMatchViewState extends State<SpectatorMatchView> {
         timeline: timeline,
         resolving: true,
         phaseLabel: 'Round ${_round!.round + 1} · Résolution',
+        initiativePlayerIndex: _round!.initiativePlayerIndex,
       );
     }
     return Column(

@@ -295,6 +295,27 @@ void main() {
     expect(c.nextRound()!.round, 3);
   });
 
+  test('LAYOUT-2, END-2: a round to play carries the initiative it was played with and the dead of each player', () {
+    final start = GameStateView(
+      phase: Phase.resolve,
+      currentRound: 3,
+      initiativePlayerIndex: 1,
+      rollsLeft: 0,
+      players: [
+        PlayerView(0, myTeam()),
+        PlayerView(1, theirTeam().sublist(0, 2), [
+          character('t2', side: 1, slot: 2, hp: 0),
+          character('t3', side: 1, slot: 3, hp: 0),
+        ]),
+      ],
+    );
+    link.server(keepState(round: 4)); // the next Keep holds the next round's initiative
+    link.serverResolved(RoundResolved(stateOf(Phase.result, mine: myTeam(), theirs: theirTeam()), const [], start));
+    final round = c.nextRound()!;
+    expect(round.initiativePlayerIndex, 1);
+    expect(round.fallen, [0, 2]);
+  });
+
   test('CLOCK-4: the clocks follow the states with the time given', () {
     var now = DateTime(2026);
     c = HumanMatchController(link, me: 0, now: () => now);

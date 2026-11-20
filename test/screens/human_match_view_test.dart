@@ -12,6 +12,7 @@ import 'package:goodlock_app/screens/selection_screen.dart';
 
 import '../helpers/builders.dart';
 import '../helpers/fake_link.dart';
+import '../helpers/rounds.dart';
 
 List<Json> fixture(String name) =>
     (jsonDecode(File('test/fixtures/$name.json').readAsStringSync()) as List).cast<Json>();
@@ -59,6 +60,23 @@ void main() {
   Finder key(String k) => find.byKey(ValueKey(k));
   String caption(WidgetTester tester) => tester.widget<Text>(key('step-caption')).data!;
   MatchScreen matchScreen(WidgetTester tester) => tester.widget<MatchScreen>(find.byType(MatchScreen));
+
+  /// The id of my first character in the recorded match.
+  final myFirst = (fixture('round_start')[1]['players'] as List).cast<Json>()[0]['team'][0]['id'] as String;
+
+  /// The Keep of round 2 of the recorded match, my first die kept.
+  GameStateView nextKeep() {
+    final json = fixture('round_start')[1];
+    ((json['players'] as List).cast<Json>()[0]['team'] as List).cast<Json>()[0]['isFaceLocked'] = true;
+    return GameStateView.fromJson(json);
+  }
+
+  /// Round 1 of the recorded match, with nothing after it.
+  Future<void> resolve0(WidgetTester tester) async {
+    link.server(GameStateView.fromJson(fixture('round_start')[0]));
+    link.serverResolved(RoundResolved.fromJson(fixture('round_resolved')[0]));
+    await tester.pump();
+  }
 
   GameStateView keep({int rollsLeft = 2, bool ready = false, List<String> locked = const []}) => stateOf(
     Phase.keep,
@@ -235,24 +253,26 @@ void main() {
       expect(left, isTrue);
     });
 
-    testWidgets('FLOW-6: the playback stops on the effect that ends the match, which stays under the result', (
+    testWidgets('FLOW-6, END-2: the playback stops on the effect that ends the match, which stays under the result', (
       tester,
     ) async {
       await open(tester);
-      await resolve(tester, over: true);
+      link.serverResolved(lateRound());
+      link.serverOver(const GameOver(0, EndReason.elimination));
+      await tester.pump();
       await playUntilDone(tester);
       await tester.pump();
 
       expect(find.text('Victoire'), findsOneWidget);
-      expect(caption(tester), startsWith('8. Garran'));
+      expect(caption(tester), startsWith('3. Name m2'));
+      expect(matchScreen(tester).playhead.notch, 3);
     });
 
     testWidgets('FLOW-6: a game over that comes once the round is playing still stops on its last effect', (
       tester,
     ) async {
       await open(tester);
-      link.server(GameStateView.fromJson(fixture('round_start')[0]));
-      link.serverResolved(RoundResolved.fromJson(fixture('round_resolved')[0]));
+      link.serverResolved(lateRound());
       await tester.pump();
       await tester.pump(step);
       link.serverOver(const GameOver(1, EndReason.elimination));
@@ -260,7 +280,182 @@ void main() {
       await tester.pump();
 
       expect(find.text('Défaite'), findsOneWidget);
-      expect(caption(tester), startsWith('8. Garran'));
+      expect(caption(tester), startsWith('3. Name m2'));
+    });
+
+    testWidgets('FLOW-6, END-1: the playback stops on the last action played, the unplayed ones after it', (
+      tester,
+    ) async {
+      await open(tester);
+      link.serverResolved(lateRound(unplayed: true));
+      await tester.pump();
+      await tester.pump(step * 20);
+      await tester.pump();
+      expect(matchScreen(tester).playhead.notch, 3, reason: 'the round stays on screen until the game over comes');
+
+      link.serverOver(const GameOver(0, EndReason.elimination));
+      await playUntilDone(tester);
+      await tester.pump();
+      expect(find.text('Victoire'), findsOneWidget);
+      expect(caption(tester), startsWith('3. Name m2'));
+    });
+
+    for (final reason in [EndReason.concede, EndReason.clock, EndReason.reconnection]) {
+      testWidgets('FLOW-6: a loss by ${reason.name} during the replay does not stop it: the round plays to its end, '
+          'then the result shows', (tester) async {
+        await open(tester);
+        await resolve(tester);
+        await tester.pump(step);
+        link.serverOver(GameOver(1, reason));
+        await tester.pump();
+        expect(find.text('Défaite'), findsNothing);
+
+        await playUntilDone(tester);
+        await tester.pump();
+        expect(find.text('Défaite'), findsOneWidget);
+        expect(caption(tester), 'Fin du round.');
+      });
+    }
+
+    testWidgets('STATE-7: an elimination at the next Upkeep (a poison death) does not stop the last round early', (
+      tester,
+    ) async {
+      await open(tester);
+      link.serverResolved(lateRound(kills: false));
+      link.serverOver(const GameOver(0, EndReason.elimination));
+      await tester.pump();
+      await playUntilDone(tester);
+      await tester.pump();
+
+      expect(find.text('Victoire'), findsOneWidget);
+      expect(caption(tester), 'Fin du round.');
+    });
+
+    testWidgets('LAYOUT-2: during Resolve the bar shows who held the initiative in the round played, not in the next', (
+      tester,
+    ) async {
+      await open(tester);
+      await resolve(tester); // round 1, initiative 0 (me); the Keep of round 2 (initiative 1) is already there
+      expect(find.byTooltip('Initiative : toi'), findsOneWidget);
+      await playUntilDone(tester);
+      await tester.pump();
+      expect(find.byTooltip('Initiative : adversaire'), findsOneWidget);
+
+      link.serverResolved(RoundResolved.fromJson(fixture('round_resolved')[1])); // round 2, initiative 1
+      link.server(GameStateView.fromJson(fixture('round_start')[2])); // round 3, initiative 0
+      await tester.pump();
+      expect(find.text('Round 2 · Résolution'), findsOneWidget);
+      expect(find.byTooltip('Initiative : adversaire'), findsOneWidget);
+      await playUntilDone(tester);
+    });
+  });
+
+  group('KEEP-3: skipping the replay to reach the next Keep', () {
+    /// Round 1 of the recorded match, with the Keep of round 2 coming [withNextKeep], my first die kept in it.
+    Future<void> resolveRound1(WidgetTester tester, {bool withNextKeep = true}) async {
+      link.server(GameStateView.fromJson(fixture('round_start')[0]));
+      link.serverResolved(RoundResolved.fromJson(fixture('round_resolved')[0]));
+      if (withNextKeep) link.server(nextKeep());
+      await tester.pump();
+    }
+
+    Future<void> skipToTheKeep(WidgetTester tester) async {
+      await tester.tap(key('skip-to-keep'));
+      await tester.pump();
+      await tester.pump();
+      expect(controller.isResolving, isFalse);
+      expect(matchScreen(tester).resolving, isFalse);
+      expect(find.text('Round 2 · relances : 2'), findsOneWidget);
+      expect(matchScreen(tester).playhead.notch, 0);
+      expect(caption(tester), 'Début du round.');
+      expect(key('lock-$myFirst'), findsOneWidget, reason: 'the dice kept in the Keep stay kept');
+      expect(controller.locks, {myFirst});
+    }
+
+    testWidgets('the button shows during Resolve once the next Keep has come, not before', (tester) async {
+      await open(tester);
+      await resolveRound1(tester, withNextKeep: false);
+      expect(key('skip-to-keep'), findsNothing);
+
+      link.server(nextKeep());
+      await tester.pump();
+      expect(key('skip-to-keep'), findsOneWidget);
+      expect(find.text('Passer au Keep'), findsOneWidget);
+      expect(key('confirm'), findsNothing);
+      await skipToTheKeep(tester);
+    });
+
+    testWidgets('works while the playback is paused', (tester) async {
+      await open(tester);
+      await resolveRound1(tester);
+      await tester.pump(step);
+      await tester.tap(key('timeline-play')); // pause
+      await tester.pump(const Duration(seconds: 5));
+      expect(controller.isResolving, isTrue);
+      await skipToTheKeep(tester);
+    });
+
+    testWidgets('works once the die view was opened, and closed', (tester) async {
+      await open(tester);
+      await resolveRound1(tester);
+      await tester.tap(key('portrait-$myFirst'));
+      await tester.pumpAndSettle();
+      await tester.tap(key('die-view-close'));
+      await tester.pumpAndSettle();
+      expect(controller.isResolving, isTrue, reason: 'opening the die view stops the playback');
+      await skipToTheKeep(tester);
+    });
+
+    testWidgets('works during the end dwell', (tester) async {
+      await open(tester, endDwell: const Duration(seconds: 10));
+      await resolveRound1(tester);
+      await tester.pump(step * 20);
+      expect(caption(tester), 'Fin du round.');
+      expect(controller.isResolving, isTrue);
+      await skipToTheKeep(tester);
+    });
+
+    testWidgets('no button once the match is over', (tester) async {
+      await open(tester);
+      await resolveRound1(tester);
+      link.serverOver(const GameOver(0, EndReason.concede));
+      await tester.pump();
+      expect(key('skip-to-keep'), findsNothing);
+      await playUntilDone(tester);
+    });
+
+    testWidgets('no button in a Keep', (tester) async {
+      await open(tester);
+      link.server(keep());
+      await tester.pump();
+      expect(key('skip-to-keep'), findsNothing);
+      expect(key('confirm'), findsOneWidget);
+    });
+  });
+
+  group('dispose while the replay waits', () {
+    testWidgets('a paused replay: nothing thrown, no timer left', (tester) async {
+      await open(tester);
+      await resolve0(tester);
+      await tester.pump(step);
+      await tester.tap(key('timeline-play')); // pause
+      await tester.pump();
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 5));
+      expect(tester.takeException(), isNull);
+      // A timer left pending fails the test once its widgets are gone.
+    });
+
+    testWidgets('the end dwell: nothing thrown, no timer left', (tester) async {
+      await open(tester, endDwell: const Duration(seconds: 10));
+      await resolve0(tester);
+      await tester.pump(step * 20);
+      expect(controller.isResolving, isTrue);
+
+      await tester.pumpWidget(const SizedBox());
+      expect(tester.takeException(), isNull);
+      // A timer left pending fails the test once its widgets are gone.
     });
   });
 

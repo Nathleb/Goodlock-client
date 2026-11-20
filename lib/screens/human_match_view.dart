@@ -106,6 +106,8 @@ class _HumanMatchViewState extends State<HumanMatchView> {
         timeline: resolving,
         resolving: true,
         phaseLabel: 'Round ${_replay.round!.round + 1} · Résolution',
+        initiativePlayerIndex: _replay.round!.initiativePlayerIndex,
+        onSkipToKeep: _replay.canSkipToKeep ? _replay.skip : null,
       );
     }
     final keep = _c.keepTimeline;

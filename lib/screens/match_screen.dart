@@ -24,6 +24,12 @@ class MatchScreen extends StatelessWidget {
 
   /// Replaces the title of the phase in the status bar (see [MatchBar.phaseLabel]).
   final String? phaseLabel;
+
+  /// Who held the initiative in the round on display, in Resolve (see [MatchBar.initiativePlayerIndex]).
+  final int? initiativePlayerIndex;
+
+  /// See [MatchBar.onSkipToKeep].
+  final VoidCallback? onSkipToKeep;
   const MatchScreen({
     super.key,
     required this.controller,
@@ -31,6 +37,8 @@ class MatchScreen extends StatelessWidget {
     required this.timeline,
     this.resolving = false,
     this.phaseLabel,
+    this.initiativePlayerIndex,
+    this.onSkipToKeep,
   });
 
   @override
@@ -44,7 +52,14 @@ class MatchScreen extends StatelessWidget {
         final canTapFaces = !resolving && !controller.ready;
         return Column(
           children: [
-            MatchBar(controller: controller, caption: outcome.caption, phaseLabel: phaseLabel, resolving: resolving),
+            MatchBar(
+              controller: controller,
+              caption: outcome.caption,
+              phaseLabel: phaseLabel,
+              resolving: resolving,
+              initiativePlayerIndex: initiativePlayerIndex,
+              onSkipToKeep: onSkipToKeep,
+            ),
             Expanded(
               child: MatchBoard(
                 players: playersFromBoard(timeline.boardAt(notch)),

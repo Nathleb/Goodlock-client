@@ -11,6 +11,7 @@ import 'package:goodlock_app/widgets/die_view.dart';
 
 import '../helpers/builders.dart';
 import '../helpers/fake_link.dart';
+import '../helpers/rounds.dart';
 
 List<Json> fixture(String name) =>
     (jsonDecode(File('test/fixtures/$name.json').readAsStringSync()) as List).cast<Json>();
@@ -124,6 +125,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('LAYOUT-2: the bar shows who held the initiative in the round replayed, not in the next Keep', (
+    tester,
+  ) async {
+    await open(tester);
+    round(0); // initiative 0; the Keep of round 2 that came with it, 1
+    await tester.pump();
+    expect(find.byTooltip('Initiative : toi'), findsOneWidget);
+    await playUntilDone(tester);
+
+    round(1); // initiative 1; the Keep of round 3, 0
+    await tester.pump();
+    expect(find.byTooltip('Initiative : adversaire'), findsOneWidget);
+    await playUntilDone(tester);
+  });
+
   testWidgets('TL-6: a pause holds the replay; fast forward ends it', (tester) async {
     await open(tester);
     round(0);
@@ -160,7 +176,8 @@ void main() {
     tester,
   ) async {
     await open(tester);
-    round(0, over: const GameOver(0, EndReason.elimination));
+    link.serverResolved(lateRound());
+    link.serverOver(const GameOver(0, EndReason.elimination));
     await tester.pump();
     expect(find.text('Victoire'), findsNothing); // the round is still playing
 
@@ -168,7 +185,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Victoire'), findsOneWidget);
-    expect(caption(tester), startsWith('8. Garran'));
+    expect(caption(tester), startsWith('3. Name m2'));
     await tester.tap(find.text('Retour'));
     expect(left, isTrue);
   });

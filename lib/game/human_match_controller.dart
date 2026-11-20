@@ -9,13 +9,24 @@ import '../net/rules.dart';
 import 'match_clocks.dart';
 import 'round_timeline.dart';
 
-/// A round the match screen has to play: the board Resolve started from, what the server resolved, and the
-/// number of the round (0-based), since the next round's Keep state may already be there.
+/// A round the match screen has to play: the board Resolve started from, what the server resolved, and what the
+/// state of the round said when Resolve started, since the next round's Keep state may already be there: the number
+/// of the round (0-based), who held the initiative, and how many characters each player had lost before it.
 class PlayableRound {
   final List<CharacterView> start;
   final List<ResolveStep> log;
   final int round;
-  const PlayableRound(this.start, this.log, {this.round = 0});
+  final int initiativePlayerIndex;
+
+  /// DEAD-1: the characters each player had lost before the round, indexed by player; they are not on [start].
+  final List<int> fallen;
+  const PlayableRound(
+    this.start,
+    this.log, {
+    this.round = 0,
+    this.initiativePlayerIndex = 0,
+    this.fallen = const [0, 0],
+  });
 }
 
 /// The player's side of a match: it follows the server's states and keeps what the player is editing
@@ -123,9 +134,22 @@ class HumanMatchController extends ChangeNotifier {
   void _onResolved(RoundResolved r) {
     // The board Resolve started from: the faces the log plays (the last reroll of the Keep comes only here),
     // the shields still in place; the fallen are off the board.
-    final start = r.startOfResolve.players.expand((p) => p.team).toList();
+    final atStart = r.startOfResolve;
+    final start = atStart.players.expand((p) => p.team).toList();
+    final fallen = [0, 0];
+    for (final p in atStart.players) {
+      fallen[p.playerIndex] += p.fallen.length;
+    }
     clocks.onState(r.gameState, now());
-    _rounds.add(PlayableRound(start, r.resolveLog, round: r.startOfResolve.currentRound));
+    _rounds.add(
+      PlayableRound(
+        start,
+        r.resolveLog,
+        round: atStart.currentRound,
+        initiativePlayerIndex: atStart.initiativePlayerIndex,
+        fallen: fallen,
+      ),
+    );
     notifyListeners();
   }
 

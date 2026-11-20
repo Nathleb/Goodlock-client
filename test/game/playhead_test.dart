@@ -452,6 +452,73 @@ void main() {
     });
   });
 
+  group('stop notch and a late haltAt', () {
+    test('the stop notch is the last notch, or haltAt when there is one', () {
+      final p = Playhead()..load(6);
+      expect(p.stopNotch, 5);
+      expect(p.haltAt, isNull);
+      p.load(6, haltAt: 2);
+      expect(p.stopNotch, 2);
+      expect(p.haltAt, 2);
+    });
+
+    test('FLOW-6: a haltAt set once the playback started stops it there, and notifies once', () {
+      fakeAsync((async) {
+        final p = Playhead()..load(6, autoplay: true);
+        async.elapse(step);
+        final count = listen(p);
+        p.haltAt = 3;
+        expect(count(), 1);
+        expect(p.stopNotch, 3);
+        async.elapse(step * 5);
+        expect(p.notch, 3);
+        expect(p.playing, isFalse);
+      });
+    });
+
+    test('FLOW-6: a haltAt set on the notch the playback stands on stops it there', () {
+      fakeAsync((async) {
+        final p = Playhead()..load(6, autoplay: true);
+        async.elapse(step * 2);
+        p.haltAt = 2;
+        expect(p.playing, isFalse);
+        async.elapse(step * 5);
+        expect(p.notch, 2);
+      });
+    });
+
+    test('a haltAt the playhead is already past is ignored: no notification, the playback goes to the end', () {
+      fakeAsync((async) {
+        final p = Playhead()..load(6, autoplay: true);
+        async.elapse(step * 3);
+        final count = listen(p);
+        p.haltAt = 2;
+        expect(count(), 0);
+        expect(p.haltAt, isNull);
+        expect(p.playing, isTrue);
+        async.elapse(step * 5);
+        expect(p.notch, 5);
+      });
+    });
+
+    test('setting the same haltAt changes nothing; null brings the stop back to the last notch', () {
+      final p = Playhead()..load(6, haltAt: 2);
+      final count = listen(p);
+      p.haltAt = 2;
+      expect(count(), 0);
+      p.haltAt = null;
+      expect(count(), 1);
+      expect(p.stopNotch, 5);
+    });
+
+    test('a late haltAt has the range of load: a notch after the first one', () {
+      final p = Playhead()..load(4);
+      expect(() => p.haltAt = 0, throwsArgumentError);
+      expect(() => p.haltAt = 4, throwsArgumentError);
+      expect(() => Playhead().haltAt = 1, throwsArgumentError, reason: 'an unloaded playhead has no notch to halt on');
+    });
+  });
+
   test('dispose cancels the playback', () {
     fakeAsync((async) {
       final p = Playhead()..load(5, autoplay: true);
