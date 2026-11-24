@@ -11,7 +11,10 @@ CharacterView character(
   int maxHp = 20,
   bool locked = false,
   DieFace face = blankFace,
+  int faceIndex = 0,
   Map<String, int> states = const {},
+  Map<String, int> stats = const {},
+  List<StatInstance> modifiers = const [],
   int shield = 0,
 }) =>
     CharacterView(
@@ -24,9 +27,12 @@ CharacterView character(
       baseSpeed: 3,
       baseDie: List.filled(6, face),
       face: face,
+      faceIndex: faceIndex,
       isFaceLocked: locked,
       position: Cell(side, slot),
       states: states,
+      stats: stats,
+      modifiers: modifiers,
     );
 
 /// A deck of six catalog characters, ids `<prefix>0` to `<prefix>5`.
@@ -47,6 +53,7 @@ GameStateView stateOf(
   List<CharacterView> theirs = const [],
   SelectionView? selection,
   List<PlayerClock>? clocks,
+  List<ResolveStep> preview = const [],
 }) =>
     GameStateView(
       phase: phase,
@@ -57,6 +64,7 @@ GameStateView stateOf(
       clocks: clocks ?? clocksOf(),
       players: [PlayerView(0, mine), PlayerView(1, theirs)],
       selection: selection,
+      preview: preview,
     );
 
 SelectionView selectionView({List<String>? myPicks}) => SelectionView([deckOf('a'), deckOf('b')], myPicks);

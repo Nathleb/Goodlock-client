@@ -7,12 +7,26 @@ import '../net/match_link.dart';
 import '../net/models.dart';
 import '../net/rules.dart';
 import 'match_clocks.dart';
+import 'round_timeline.dart';
 
-/// A round the Flame scene has to play: the board of the Keep it started from, and what the server resolved.
+/// A round the match screen has to play: the board Resolve started from, what the server resolved, and what the
+/// state of the round said when Resolve started, since the next round's Keep state may already be there: the number
+/// of the round (0-based), who held the initiative, and how many characters each player had lost before it.
 class PlayableRound {
   final List<CharacterView> start;
   final List<ResolveStep> log;
-  const PlayableRound(this.start, this.log);
+  final int round;
+  final int initiativePlayerIndex;
+
+  /// DEAD-1: the characters each player had lost before the round, indexed by player; they are not on [start].
+  final List<int> fallen;
+  const PlayableRound(
+    this.start,
+    this.log, {
+    this.round = 0,
+    this.initiativePlayerIndex = 0,
+    this.fallen = const [0, 0],
+  });
 }
 
 /// The player's side of a match: it follows the server's states and keeps what the player is editing
@@ -42,6 +56,7 @@ class HumanMatchController extends ChangeNotifier {
   final _rounds = Queue<PlayableRound>();
   bool _playing = false;
   String? _keepKey;
+  RoundTimeline? _keepTimeline;
   final _subs = <StreamSubscription<Object?>>[];
 
   HumanMatchController(this.link, {required this.me, DateTime Function()? now})
@@ -73,6 +88,10 @@ class HumanMatchController extends ChangeNotifier {
   bool get hasRoundToPlay => _rounds.isNotEmpty;
   bool get showResult => over != null && !isResolving;
 
+  /// UX-1, FLOW-3: the round the Keep would give if every current face were final, from the server's preview.
+  /// Built once per Roll: keeping a die or the echo of Confirm leaves it as it is (TL-6). Null outside a Keep.
+  RoundTimeline? get keepTimeline => phase == Phase.keep ? _keepTimeline : null;
+
   /// The Confirm button: a Selection needs exactly [teamSize] picks; once confirmed it reads Cancel (GAME-8).
   bool get canConfirm {
     if (state == null || ready || isResolving) return false;
@@ -103,6 +122,8 @@ class HumanMatchController extends ChangeNotifier {
         if (key != _keepKey) {
           _keepKey = key;
           locks = {for (final c in gs.players[me].team) if (c.isFaceLocked) c.id};
+          final board = gs.players.expand((p) => p.team).toList();
+          _keepTimeline = board.isEmpty ? null : RoundTimeline.build(board, gs.preview);
         }
       default:
         break;
@@ -111,10 +132,24 @@ class HumanMatchController extends ChangeNotifier {
   }
 
   void _onResolved(RoundResolved r) {
-    // The state just before this event is this round's Keep board, with its shields still in place.
-    final start = state?.players.expand((p) => p.team).toList() ?? const <CharacterView>[];
+    // The board Resolve started from: the faces the log plays (the last reroll of the Keep comes only here),
+    // the shields still in place; the fallen are off the board.
+    final atStart = r.startOfResolve;
+    final start = atStart.players.expand((p) => p.team).toList();
+    final fallen = [0, 0];
+    for (final p in atStart.players) {
+      fallen[p.playerIndex] += p.fallen.length;
+    }
     clocks.onState(r.gameState, now());
-    if (start.isNotEmpty) _rounds.add(PlayableRound(start, r.resolveLog));
+    _rounds.add(
+      PlayableRound(
+        start,
+        r.resolveLog,
+        round: atStart.currentRound,
+        initiativePlayerIndex: atStart.initiativePlayerIndex,
+        fallen: fallen,
+      ),
+    );
     notifyListeners();
   }
 

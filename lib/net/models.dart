@@ -6,6 +6,14 @@ typedef Json = Map<String, dynamic>;
 List<T> _list<T>(Object? raw, T Function(Json) parse) =>
     (raw as List? ?? const []).map((e) => parse(e as Json)).toList(growable: false);
 
+bool _sameList<T>(List<T> a, List<T> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 /// A board cell: which side, which slot.
 class Cell {
   final int playerIndex;
@@ -45,6 +53,12 @@ class TargetGroup {
 
   factory TargetGroup.fromJson(Json j) =>
       TargetGroup(j['side'] as String, j['mode'] as String, List<int>.from(j['n'] as List));
+
+  @override
+  bool operator ==(Object other) =>
+      other is TargetGroup && other.side == side && other.mode == mode && _sameList(other.n, n);
+  @override
+  int get hashCode => Object.hash(side, mode, Object.hashAll(n));
 }
 
 /// One thing an effect does to its cells (Damage, Heal, Swap, ApplyStat...).
@@ -63,6 +77,17 @@ class FacePart {
         state: j['state'] as String?,
         duration: j['duration'] as int?,
       );
+
+  @override
+  bool operator ==(Object other) =>
+      other is FacePart &&
+      other.part == part &&
+      other.magnitude == magnitude &&
+      other.stat == stat &&
+      other.state == state &&
+      other.duration == duration;
+  @override
+  int get hashCode => Object.hash(part, magnitude, stat, state, duration);
 }
 
 /// One step of a face: its target cells and its parts, applied in order on each cell.
@@ -73,6 +98,12 @@ class FaceEffect {
 
   factory FaceEffect.fromJson(Json j) =>
       FaceEffect(_list(j['targets'], TargetGroup.fromJson), _list(j['parts'], FacePart.fromJson));
+
+  @override
+  bool operator ==(Object other) =>
+      other is FaceEffect && _sameList(other.targets, targets) && _sameList(other.parts, parts);
+  @override
+  int get hashCode => Object.hash(Object.hashAll(targets), Object.hashAll(parts));
 }
 
 /// An active buff/debuff instance on a character.
@@ -94,6 +125,12 @@ class DieFace {
 
   factory DieFace.fromJson(Json j) =>
       DieFace(j['description'] as String, j['priority'] as int, _list(j['effects'], FaceEffect.fromJson));
+
+  @override
+  bool operator ==(Object other) =>
+      other is DieFace && other.description == description && other.priority == priority && _sameList(other.effects, effects);
+  @override
+  int get hashCode => Object.hash(description, priority, Object.hashAll(effects));
 }
 
 /// A catalog character (collection screen, team preview decks).
@@ -129,6 +166,10 @@ class CharacterView {
   final List<DieFace> baseDie;
   final DieFace face;
 
+  /// Index of [face] in [baseDie]: a die can hold identical faces, so the content alone does not tell which
+  /// one came up.
+  final int faceIndex;
+
   /// Whether the die was kept at the last Roll (ROLL-2). In a state sent to me alone, my own dice show
   /// instead what I last confirmed in the current Keep; the opponent's never show their Keep in progress.
   final bool isFaceLocked;
@@ -147,6 +188,7 @@ class CharacterView {
     required this.baseSpeed,
     required this.baseDie,
     required this.face,
+    required this.faceIndex,
     required this.isFaceLocked,
     required this.position,
     this.modifiers = const [],
@@ -156,7 +198,8 @@ class CharacterView {
 
   bool get isDead => hp <= 0;
 
-  CharacterView copyWith({int? hp, int? shield, Cell? position, DieFace? face, bool? isFaceLocked}) => CharacterView(
+  CharacterView copyWith({int? hp, int? shield, Cell? position, DieFace? face, int? faceIndex, bool? isFaceLocked}) =>
+      CharacterView(
         id: id,
         catalogId: catalogId,
         name: name,
@@ -166,6 +209,7 @@ class CharacterView {
         baseSpeed: baseSpeed,
         baseDie: baseDie,
         face: face ?? this.face,
+        faceIndex: faceIndex ?? this.faceIndex,
         isFaceLocked: isFaceLocked ?? this.isFaceLocked,
         position: position ?? this.position,
         modifiers: modifiers,
@@ -183,6 +227,7 @@ class CharacterView {
         baseSpeed: j['baseSpeed'] as int,
         baseDie: _list(j['baseDie'], DieFace.fromJson),
         face: DieFace.fromJson(j['face'] as Json),
+        faceIndex: j['faceIndex'] as int,
         isFaceLocked: j['isFaceLocked'] as bool,
         position: Cell.fromJson(j['position'] as Json),
         modifiers: _list(j['modifiers'], StatInstance.fromJson),
@@ -257,6 +302,9 @@ class GameStateView {
   final List<PlayerView> players;
   final SelectionView? selection;
 
+  /// KEEP only: the log the round would give if every current face were final. Empty in other phases.
+  final List<ResolveStep> preview;
+
   const GameStateView({
     required this.phase,
     required this.currentRound,
@@ -266,6 +314,7 @@ class GameStateView {
     this.clocks = const [],
     required this.players,
     this.selection,
+    this.preview = const [],
   });
 
   factory GameStateView.fromJson(Json j) => GameStateView(
@@ -277,6 +326,7 @@ class GameStateView {
         clocks: _list(j['clocks'], PlayerClock.fromJson),
         players: _list(j['players'], PlayerView.fromJson),
         selection: j['selection'] == null ? null : SelectionView.fromJson(j['selection'] as Json),
+        preview: _list(j['preview'], ResolveStep.fromJson),
       );
 }
 
@@ -329,25 +379,39 @@ class ResolveChange {
 class ResolveStep {
   final String characterId;
   final bool skipped;
+
+  /// The match was decided before this action's turn: it was not played (END-1). Such a step is also
+  /// skipped, with no effects and no changes; it keeps one step per queue entry in the log.
+  final bool unplayed;
   final List<ResolvedEffect> effects;
   final List<ResolveChange> changes;
-  const ResolveStep(this.characterId, this.skipped, this.effects, this.changes);
+  const ResolveStep(this.characterId, this.skipped, this.effects, this.changes, {required this.unplayed});
 
   factory ResolveStep.fromJson(Json j) => ResolveStep(
         j['characterId'] as String,
         j['skipped'] as bool,
         _list(j['effects'], ResolvedEffect.fromJson),
         _list(j['changes'], ResolveChange.fromJson),
+        unplayed: j['unplayed'] as bool,
       );
 }
 
 class RoundResolved {
+  /// The board once the round has resolved.
   final GameStateView gameState;
   final List<ResolveStep> resolveLog;
-  const RoundResolved(this.gameState, this.resolveLog);
 
-  factory RoundResolved.fromJson(Json j) =>
-      RoundResolved(GameStateView.fromJson(j['gameState'] as Json), _list(j['resolveLog'], ResolveStep.fromJson));
+  /// The board when Resolve starts, with the faces [resolveLog] plays: the last reroll of the Keep is sent
+  /// nowhere else.
+  final GameStateView startOfResolve;
+
+  const RoundResolved(this.gameState, this.resolveLog, this.startOfResolve);
+
+  factory RoundResolved.fromJson(Json j) => RoundResolved(
+        GameStateView.fromJson(j['gameState'] as Json),
+        _list(j['resolveLog'], ResolveStep.fromJson),
+        GameStateView.fromJson(j['startOfResolve'] as Json),
+      );
 }
 
 /// Why a match ended (END-3).

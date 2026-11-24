@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
 
 import '../game/human_match_controller.dart';
-import '../game/resolve_game.dart';
+import '../game/playhead.dart';
+import '../game/round_replay.dart';
+import '../game/round_timeline.dart';
 import '../net/models.dart';
-import '../widgets/match_clocks_bar.dart';
 import '../widgets/match_result.dart';
-import '../widgets/resolve_view.dart';
-import 'keep_screen.dart';
+import 'match_screen.dart';
 import 'placement_screen.dart';
 import 'selection_screen.dart';
 
-/// The match from the player's seat: the screen of each phase, the Flame scene for Resolve (FLOW-4) and the
-/// result (FLOW-6). Everything it shows comes from [HumanMatchController]. The Flame scene stays mounted,
-/// out of sight, so it has its size when a round has to be played.
+/// The match from the player's seat: the screen of each phase, the match screen for the Keep and the Resolve
+/// (FLOW-3..5), and the result (FLOW-6). Everything it shows comes from [HumanMatchController]; the playhead of the
+/// match screen is its own, shared by the Keep preview and the [RoundReplay].
 class HumanMatchView extends StatefulWidget {
   final HumanMatchController controller;
   final VoidCallback onLeave;
 
-  /// Playback speed of the Resolve scene, and whether it vibrates; tests use a fast, silent one.
-  final double speed;
-  final bool haptics;
+  /// The time between two notches of the playback; tests use a short one.
+  final Duration stepDelay;
+
+  /// How long the end of a played round stays on screen before the match moves on; tests use none.
+  final Duration endDwell;
   const HumanMatchView({
     super.key,
     required this.controller,
     required this.onLeave,
-    this.speed = 1,
-    this.haptics = true,
+    this.stepDelay = const Duration(milliseconds: 900),
+    this.endDwell = const Duration(milliseconds: 1200),
   });
 
   @override
@@ -33,66 +35,52 @@ class HumanMatchView extends StatefulWidget {
 }
 
 class _HumanMatchViewState extends State<HumanMatchView> {
-  late final ResolveGame _game;
-  bool _draining = false;
+  late final Playhead _playhead = Playhead(stepDelay: widget.stepDelay);
+  late final RoundReplay _replay;
+
+  /// The Keep timeline the playhead was loaded with.
+  RoundTimeline? _loadedKeep;
 
   HumanMatchController get _c => widget.controller;
 
   @override
   void initState() {
     super.initState();
-    _game = ResolveGame(viewerIndex: _c.me)
-      ..speed = widget.speed
-      ..haptics = widget.haptics;
-    _c.addListener(_onChange);
-    _onChange();
+    _replay = RoundReplay(_c, _playhead, endDwell: widget.endDwell)..addListener(_onReplay);
+    _c.addListener(_loadKeep);
+    _loadKeep();
   }
 
   @override
   void dispose() {
-    _c.removeListener(_onChange);
+    _c.removeListener(_loadKeep);
+    _replay.dispose();
+    _playhead.dispose();
     super.dispose();
   }
 
-  void _onChange() {
-    if (!_draining && _c.hasRoundToPlay) _drain();
+  /// A round to play takes the playhead: the Keep that follows loads it again.
+  void _onReplay() {
+    if (_replay.timeline != null) _loadedKeep = null;
   }
 
-  /// Plays the rounds the server resolved, one after the other, then lets the controller move on.
-  Future<void> _drain() async {
-    _draining = true;
-    while (mounted) {
-      final round = _c.nextRound();
-      if (round == null) break;
-      await WidgetsBinding.instance.endOfFrame; // the scene is on screen now
-      if (!mounted) break;
-      await _game.playRound(round.start, round.log);
-      if (mounted) _c.roundPlayed();
-    }
-    _draining = false;
+  /// TL-6: a new Keep timeline (a new Roll) puts the playhead back at the beginning, paused.
+  void _loadKeep() {
+    final timeline = _c.keepTimeline;
+    if (_c.isResolving || _replay.timeline != null || timeline == null || identical(timeline, _loadedKeep)) return;
+    _loadedKeep = timeline;
+    _playhead.load(timeline.notchCount);
   }
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _c,
+      listenable: Listenable.merge([_c, _replay]),
       builder: (context, _) {
-        final resolving = _c.isResolving;
         return SafeArea(
           child: Stack(
             children: [
-              Positioned.fill(
-                child: Offstage(
-                  offstage: !resolving,
-                  child: GameScreenFrame(
-                    game: _game,
-                    title: 'Résolution',
-                    status: MatchClocksBar(clocks: _c.clocks),
-                    controls: [PlaybackControls(game: _game, onChanged: () => setState(() {}))],
-                  ),
-                ),
-              ),
-              if (!resolving) Positioned.fill(child: _phase()),
+              Positioned.fill(child: _screen()),
               if (_c.showResult)
                 Positioned.fill(
                   child: ColoredBox(
@@ -109,10 +97,29 @@ class _HumanMatchViewState extends State<HumanMatchView> {
     );
   }
 
-  Widget _phase() => switch (_c.phase) {
-    Phase.selection => SelectionScreen(controller: _c),
-    Phase.placement => PlacementScreen(controller: _c),
-    Phase.keep => KeepScreen(controller: _c),
-    _ => const Center(child: Text('En attente du serveur…')),
-  };
+  Widget _screen() {
+    final resolving = _replay.timeline;
+    if (resolving != null) {
+      return MatchScreen(
+        controller: _c,
+        playhead: _playhead,
+        timeline: resolving,
+        resolving: true,
+        phaseLabel: 'Round ${_replay.round!.round + 1} · Résolution',
+        initiativePlayerIndex: _replay.round!.initiativePlayerIndex,
+        onSkipToKeep: _replay.canSkipToKeep ? _replay.skip : null,
+      );
+    }
+    final keep = _c.keepTimeline;
+    return switch (_c.phase) {
+      Phase.selection => SelectionScreen(controller: _c),
+      Phase.placement => PlacementScreen(controller: _c),
+      Phase.keep when keep != null && identical(keep, _loadedKeep) => MatchScreen(
+        controller: _c,
+        playhead: _playhead,
+        timeline: keep,
+      ),
+      _ => const Center(child: Text('En attente du serveur…')),
+    };
+  }
 }

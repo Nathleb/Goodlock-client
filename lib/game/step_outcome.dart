@@ -1,0 +1,270 @@
+// What the board and the status bar show for one notch of a round (STEP-2..5).
+// Pure Dart (no Flutter import). It computes no outcome: it diffs the boards of the timeline around a step and
+// words the face that played.
+//
+// Wording: a quantity reads value first, in lower case ("9 dégâts", "1 dégât", "4 de soin", "+4 de bouclier"); a
+// stat or a state is a name, capitalised, followed by its value and its duration ("Puissance +3 · 2 t.",
+// "Poison · 2 t.").
+
+import 'dart:math' as math;
+
+import '../net/models.dart';
+import '../net/rules.dart';
+import 'round_timeline.dart';
+
+/// What one effect of an action did on one of its target cells (STEP-2, STEP-3).
+class CellOutcome {
+  final Cell cell;
+
+  /// The character that stood on the cell before the action; null for an empty cell.
+  final String? characterId;
+
+  /// The first part of the effect that reached the cell (Damage, Heal...): the board picks the color from it.
+  final String part;
+
+  /// What the effect really did, in French: "−12", "bloqué", "+5", "+4 de bouclier", "Étourdi · 1 t.",
+  /// "Hâte retirée", "raté"...
+  final String label;
+  const CellOutcome(this.cell, this.characterId, this.part, this.label);
+}
+
+/// What a notch shows: the acting character, the target cells and the caption of the status bar.
+class StepOutcome {
+  final String? actorId; // null on the start and end notches
+  final bool skipped;
+  final List<CellOutcome> cells;
+  final String caption;
+  const StepOutcome(this.actorId, this.skipped, this.cells, this.caption);
+}
+
+/// The outcome of [notch] of [timeline]; [resolving] is false during a Keep, when the round is a preview.
+///
+/// Known approximations: each target cell is matched against the board before the whole action, while the server
+/// resolves cells just before each effect.
+/// - When an effect of the action has already swapped characters, a later effect's label can land on the character
+///   that stood on the cell before the swap.
+/// - A target an earlier effect of the same action killed is still named in the caption of a later effect, as if it
+///   stood there; the label of its cell is right (it shows the HP lost over the whole action).
+StepOutcome stepOutcome(RoundTimeline timeline, int notch, {required bool resolving}) {
+  final index = timeline.stepAt(notch);
+  if (index == null) {
+    final caption = notch == 0
+        ? 'Début du round.'
+        : resolving
+        ? 'Fin du round.'
+        : 'Fin du round si personne ne relance.';
+    return StepOutcome(null, false, const [], caption);
+  }
+  final token = timeline.tokens[index];
+  final step = timeline.steps[index];
+  final before = timeline.boardAt(notch - 1);
+  final after = timeline.boardAt(notch);
+  final actor = _byId(before, token.characterId)?.name ?? token.characterId;
+  final number = '$notch. $actor : ';
+  if (step.unplayed) {
+    return StepOutcome(token.characterId, step.skipped, const [], '${number}pas jouée, le match est décidé.');
+  }
+  if (step.skipped) {
+    final why = token.status == TokenStatus.dead ? 'mort avant son tour' : 'action annulée (étourdi)';
+    return StepOutcome(token.characterId, true, const [], '$number$why.');
+  }
+  return StepOutcome(
+    token.characterId,
+    false,
+    _cells(step.effects, before, after),
+    '$number${_describe(step.effects, token.face, before)}.',
+  );
+}
+
+CharacterView? _byId(List<CharacterView> board, String id) {
+  for (final c in board) {
+    if (c.id == id) return c;
+  }
+  return null;
+}
+
+CharacterView? _livingAt(List<CharacterView> board, Cell cell) {
+  for (final c in board) {
+    if (!c.isDead && c.position == cell) return c;
+  }
+  return null;
+}
+
+/// One outcome per target cell, in the order of the log; a cell two effects reach keeps the part of the first.
+List<CellOutcome> _cells(List<ResolvedEffect> effects, List<CharacterView> before, List<CharacterView> after) {
+  final outcomes = <Cell, CellOutcome>{};
+  for (final effect in effects) {
+    final part = effect.parts.isEmpty ? '' : effect.parts.first;
+    for (final cell in effect.targets) {
+      if (outcomes.containsKey(cell)) continue;
+      final target = _livingAt(before, cell);
+      final label = target != null
+          ? _diff(target, _byId(after, target.id)!)
+          // A Swap moves a character into an empty cell: that is not a miss.
+          : effect.parts.contains('Swap') && _livingAt(after, cell) != null
+          ? 'déplacé'
+          : 'raté';
+      outcomes[cell] = CellOutcome(cell, target?.id, part, label);
+    }
+  }
+  return outcomes.values.toList(growable: false);
+}
+
+/// What changed on a character across the action, as the server sent it.
+String _diff(CharacterView prev, CharacterView next) {
+  final hp = next.hp - prev.hp; // a killed character is at 0 hp on the timeline boards
+  final shield = next.shield - prev.shield;
+  final divineShieldSpent = (prev.states['DIVINE_SHIELD'] ?? 0) > 0 && (next.states['DIVINE_SHIELD'] ?? 0) == 0;
+  final pieces = <String>[
+    if (hp < 0) '−${-hp}',
+    if (hp > 0) '+$hp',
+    if (hp == 0 && (shield < 0 || divineShieldSpent)) 'bloqué',
+    if (shield > 0) '+$shield de bouclier',
+    if (next.position != prev.position) 'déplacé',
+    for (final stat in _keys(prev.stats, next.stats))
+      if ((next.stats[stat] ?? 0) != (prev.stats[stat] ?? 0))
+        '${_statName(stat)} ${_signed((next.stats[stat] ?? 0) - (prev.stats[stat] ?? 0))}'
+            '${_rounds(_newDuration(stat, prev, next))}',
+    for (final axis in _keys(prev.states, next.states))
+      if ((next.states[axis] ?? 0) != (prev.states[axis] ?? 0) && !(axis == 'DIVINE_SHIELD' && divineShieldSpent))
+        _stateLabel(axis, prev.states[axis] ?? 0, next.states[axis] ?? 0),
+  ];
+  return pieces.isEmpty ? 'sans effet' : pieces.join(' · ');
+}
+
+List<String> _keys(Map<String, int> a, Map<String, int> b) => ({...a.keys, ...b.keys}.toList()..sort());
+
+String _signed(int n) => n < 0 ? '−${-n}' : '+$n';
+
+/// " · 2 t.", the duration of a stat or a state; empty when there is none.
+String _rounds(int? duration) => duration == null ? '' : ' · $duration t.';
+
+/// The longest of the stat changes (STAT-2) that [next] holds on [stat] and [prev] did not: the duration of what the
+/// action gave; null when it gave none.
+int? _newDuration(String stat, CharacterView prev, CharacterView next) {
+  final held = [for (final m in prev.modifiers) (m.stat, m.value, m.roundsLeft)];
+  int? longest;
+  for (final m in next.modifiers) {
+    final isNew = !held.remove((m.stat, m.value, m.roundsLeft));
+    if (isNew && m.stat == stat) longest = math.max(longest ?? 0, m.roundsLeft);
+  }
+  return longest;
+}
+
+/// A state counter is a signed duration (STATE-1): its sign tells which state of the axis holds it. A counter an
+/// opposite state brought back to 0 names the state that is gone.
+String _stateLabel(String axis, int prev, int next) {
+  if (next == 0) return _removed(_axisState(axis, prev.sign));
+  return '${_axisState(axis, next.sign)}${_rounds(next.abs())}';
+}
+
+String _removed(String state) => switch (state) {
+  'Hâte' || 'Lenteur' || 'Régénération' => '$state retirée',
+  _ => '$state retiré',
+};
+
+String _axisState(String axis, int sign) => switch (axis) {
+  'SPEED' => sign > 0 ? 'Hâte' : 'Lenteur',
+  'VITALITY' => sign > 0 ? 'Régénération' : 'Poison',
+  'STUN' => 'Étourdi',
+  'ROOT' => 'Enraciné',
+  'DIVINE_SHIELD' => 'Bouclier divin',
+  _ => axis,
+};
+
+String _stateName(String state) => switch (state) {
+  'HASTE' => 'Hâte',
+  'SLOW' => 'Lenteur',
+  'REGEN' => 'Régénération',
+  'POISON' => 'Poison',
+  'STUN' => 'Étourdi',
+  'ROOT' => 'Enraciné',
+  'DIVINE_SHIELD' => 'Bouclier divin',
+  _ => state,
+};
+
+String _statName(String stat) => switch (stat) {
+  'POWER' => 'Puissance',
+  'ARMOR' => 'Armure',
+  _ => stat,
+};
+
+/// "7 dégâts, en face et voisins → Morrow, cellule vide, Ysolde", one clause per effect that played.
+/// `effects[i]` is the effect `face.effects[i]` gave; the log stops early when the actor dies during its action.
+String _describe(List<ResolvedEffect> effects, DieFace face, List<CharacterView> before) {
+  if (effects.isEmpty) return 'face vide';
+  return [
+    for (var i = 0; i < effects.length; i++)
+      _clause(effects[i], i < face.effects.length ? face.effects[i] : null, before),
+  ].join(' ; ');
+}
+
+/// The face effect is trusted only when its parts are the ones logged; otherwise the effect is worded from the log
+/// alone, without values or targeting. This check does not detect a face rerolled into another face with the same
+/// part labels: the caption is right only when the start board carries the faces the log plays, which the
+/// production paths guarantee (the Keep board with its preview, and startOfResolve, which carries the faces played,
+/// with its log).
+String _clause(ResolvedEffect effect, FaceEffect? face, List<CharacterView> before) {
+  final authored = face != null && _sameParts(face, effect) ? face : null;
+  final parts = authored == null ? effect.parts.map(_partWord).join(' + ') : authored.parts.map(_partText).join(' + ');
+  final targeting = authored == null ? '' : ', ${_targeting(authored.targets)}';
+  final names = effect.fizzled
+      ? 'aucune cellule'
+      : effect.targets.map((cell) => _livingAt(before, cell)?.name ?? 'cellule vide').join(', ');
+  return '$parts$targeting → $names';
+}
+
+bool _sameParts(FaceEffect face, ResolvedEffect effect) =>
+    face.parts.length == effect.parts.length &&
+    [for (var i = 0; i < face.parts.length; i++) face.parts[i].part == effect.parts[i]].every((same) => same);
+
+/// The word of a logged part, which carries no value.
+String _partWord(String part) => switch (part) {
+  'Damage' => 'dégâts',
+  'FixedDamage' => 'dégâts fixes',
+  'Heal' => 'soin',
+  'Shield' => 'bouclier',
+  'Swap' => 'échange',
+  'ApplyStat' => 'stat',
+  'ApplyState' => 'état',
+  _ => part,
+};
+
+/// The words of one part of a face, with the value written on the face.
+String _partText(FacePart p) => switch (p.part) {
+  'Damage' => p.magnitude < 2 ? '${p.magnitude} dégât' : '${p.magnitude} dégâts',
+  'FixedDamage' => p.magnitude < 2 ? '${p.magnitude} dégât fixe' : '${p.magnitude} dégâts fixes',
+  'Heal' => '${p.magnitude} de soin',
+  'Shield' => '${p.magnitude} de bouclier',
+  'Swap' => 'échange',
+  'ApplyStat' => '${_statName(p.stat ?? '')} ${_signed(p.magnitude)}${_rounds(p.duration)}',
+  'ApplyState' => '${_stateName(p.state ?? '')}${_rounds(p.duration)}',
+  _ => '${p.part} ${p.magnitude}',
+};
+
+/// A short French phrase for the cells a face aims at (TGT rules): RELATIVE offsets are read from the actor's cell,
+/// ABSOLUTE ones are slots.
+String _targeting(List<TargetGroup> groups) => groups.map(_group).join(' et ');
+
+String _group(TargetGroup g) {
+  final ally = g.side == 'ALLY';
+  final n = g.n.toSet();
+  if (g.mode == 'ABSOLUTE') {
+    if (n.length == boardSize && n.every((s) => s >= 0 && s < boardSize)) {
+      return ally ? 'tous les alliés' : 'tous les ennemis';
+    }
+    final slots = (n.toList()..sort()).join(', ');
+    if (n.length == 1) return ally ? 'cellule alliée $slots' : 'cellule ennemie $slots';
+    return ally ? 'cellules alliées $slots' : 'cellules ennemies $slots';
+  }
+  final words = <String>[if (n.contains(0)) ally ? 'soi' : 'en face'];
+  final others = n.difference({0});
+  if (others.any((o) => o.abs() > 1)) {
+    words.add(ally ? 'alliés' : 'ennemis');
+  } else if (others.length == 2) {
+    words.add(ally ? 'alliés voisins' : 'voisins');
+  } else if (others.length == 1) {
+    words.add(ally ? 'allié voisin' : 'voisin');
+  }
+  return words.join(' et ');
+}

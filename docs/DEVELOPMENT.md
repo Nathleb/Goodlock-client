@@ -9,7 +9,7 @@ Setup is WSL2 on Windows 11 with an Android phone; adapt paths to your machine.
 |---|---|---|
 | Backend (NestJS + Socket.IO, Postgres) | `../Goodlock-back` | WSL, port 3000 |
 | Database | Docker (`docker compose up -d db` in Goodlock-back) | Docker Desktop |
-| App (Flutter + Flame) | this repo | phone (or emulator, or browser) |
+| App (Flutter) | this repo | phone (or emulator, or browser) |
 
 The phone talks to the backend over the local network: `http://<PC-IP>:3000`.
 
@@ -136,7 +136,7 @@ every restart of the tunnel.
 
 A development shortcut only: the app targets mobile, not the web. No web-specific code, no web
 build is shipped. It shows the same screens and logic as on the phone, rendered by the same
-engine: good for layout and flow; feel, touch and Flame performance are still judged on the phone.
+engine: good for layout and flow; feel, touch and performance are still judged on the phone.
 
 ```bash
 flutter run -d web-server --web-port 8080
@@ -174,8 +174,7 @@ flutter test tool/vs_bot_e2e_test.dart --dart-define=E2E_SERVER=http://localhost
 ```
 
 In the app, the Play tab has "Jouer contre un bot": you play Selection, Placement and Keep yourself, a bot plays the
-other seat. Not there yet: the timeline and the Keep preview, the die view, the rolling-dice and Upkeep animations, a
-lobby, drag and drop for the Placement.
+other seat. Not there yet: the rolling-dice and Upkeep animations, a lobby, drag and drop for the Placement.
 
 ## Gotchas
 

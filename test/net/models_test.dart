@@ -22,7 +22,7 @@ Map<String, dynamic> face(String d, {int priority = 0}) => {
       ],
     };
 
-Map<String, dynamic> character(String id, {int playerIndex = 0, int slot = 0, int hp = 10}) => {
+Map<String, dynamic> character(String id, {int playerIndex = 0, int slot = 0, int hp = 10, int faceIndex = 0}) => {
       'id': id,
       'catalogId': 'alicent',
       'name': 'Alicent',
@@ -32,6 +32,7 @@ Map<String, dynamic> character(String id, {int playerIndex = 0, int slot = 0, in
       'baseSpeed': 18,
       'baseDie': List.generate(6, (i) => face('f$i')),
       'face': face('f0', priority: 1),
+      'faceIndex': faceIndex,
       'isFaceLocked': true,
       'position': {'playerIndex': playerIndex, 'slot': slot},
     };
@@ -69,6 +70,70 @@ void main() {
     expect(c.position, const Cell(1, 3));
     expect(c.isDead, isFalse);
     expect(CharacterView.fromJson(character('d', hp: 0)).isDead, isTrue);
+  });
+
+  test('CharacterView parses the index of its face in its die, which copyWith keeps or replaces', () {
+    final c = CharacterView.fromJson(character('c1', faceIndex: 4));
+    expect(c.faceIndex, 4);
+    expect(c.copyWith(hp: 1).faceIndex, 4);
+    expect(c.copyWith(faceIndex: 2).faceIndex, 2);
+  });
+
+  test('a character without its face index is no CharacterDTO', () {
+    final full = {
+      ...character('c1'),
+      'modifiers': <Object>[],
+      'stats': {'POWER': 0, 'ARMOR': 0},
+      'states': {'SPEED': 0, 'VITALITY': 0, 'STUN': 0, 'ROOT': 0, 'DIVINE_SHIELD': 0},
+    };
+    expectValid('CharacterDTO', full);
+    expect(schemaFor('CharacterDTO').validate({...full}..remove('faceIndex')).isValid, isFalse);
+  });
+
+  test('ResolveStep parses unplayed: a skipped step the decided match never reached', () {
+    final unplayed = {'characterId': 'b', 'skipped': true, 'unplayed': true, 'effects': <Object>[], 'changes': <Object>[]};
+    final skipped = {...unplayed, 'unplayed': false};
+
+    expectValid('ResolveStepDTO', unplayed);
+    expectValid('ResolveStepDTO', skipped);
+    expect(schemaFor('ResolveStepDTO').validate({...unplayed}..remove('unplayed')).isValid, isFalse);
+    final parsed = ResolveStep.fromJson(unplayed);
+    expect(parsed.unplayed, isTrue);
+    expect(parsed.skipped, isTrue);
+    expect(ResolveStep.fromJson(skipped).unplayed, isFalse);
+  });
+
+  test('every recorded character shows the face its face index points to in its die', () {
+    final resolved = jsonDecode(File('test/fixtures/round_resolved.json').readAsStringSync()) as List;
+    final starts = jsonDecode(File('test/fixtures/round_start.json').readAsStringSync()) as List;
+    final boards = [
+      ...starts.map((j) => GameStateView.fromJson(j as Json)),
+      for (final r in resolved.map((j) => RoundResolved.fromJson(j as Json))) ...[r.gameState, r.startOfResolve],
+    ];
+    final characters = boards.expand((b) => b.players).expand((p) => [...p.team, ...p.fallen]).toList();
+    expect(characters, isNotEmpty);
+    for (final c in characters) {
+      expect(c.faceIndex, inInclusiveRange(0, c.baseDie.length - 1));
+      expect(c.baseDie[c.faceIndex], c.face, reason: '${c.name} shows face ${c.faceIndex}');
+    }
+  });
+
+  test('every recorded log has one step per character on the start board, the unplayed ones skipped and empty', () {
+    final raw = jsonDecode(File('test/fixtures/round_resolved.json').readAsStringSync()) as List;
+    expect(raw, isNotEmpty);
+    for (final j in raw) {
+      final r = RoundResolved.fromJson(j as Json);
+      final onBoard = r.startOfResolve.players.expand((p) => p.team).map((c) => c.id).toList();
+      expect(r.resolveLog.map((s) => s.characterId), unorderedEquals(onBoard));
+      for (final s in r.resolveLog.where((s) => s.unplayed)) {
+        expect(s.skipped, isTrue);
+        expect(s.effects, isEmpty);
+        expect(s.changes, isEmpty);
+      }
+      // Unplayed steps only come once the match is decided: none is followed by a step that played.
+      final firstUnplayed = r.resolveLog.indexWhere((s) => s.unplayed);
+      if (firstUnplayed >= 0) expect(r.resolveLog.skip(firstUnplayed).every((s) => s.unplayed), isTrue);
+    }
   });
 
   test('GameStateView parses a SELECTION view with both decks and my pick', () {
@@ -160,10 +225,36 @@ void main() {
           {'playerIndex': 1, 'team': [character('b', playerIndex: 1, hp: 7)]},
         ],
       },
+      'startOfResolve': {
+        'phase': 'RESOLVE_PHASE',
+        'currentRound': 1,
+        'initiativePlayerIndex': 0,
+        'rollsLeft': 0,
+        'clocks': [
+          {'remainingMs': 600000, 'reconnectionMs': 180000, 'running': false, 'connected': true},
+          {'remainingMs': 600000, 'reconnectionMs': 180000, 'running': false, 'connected': true},
+        ],
+        'players': [
+          for (final (i, id) in [(0, 'a'), (1, 'b')])
+            {
+              'playerIndex': i,
+              'team': [
+                {
+                  ...character(id, playerIndex: i),
+                  'modifiers': <Object>[],
+                  'stats': {'POWER': 0, 'ARMOR': 0},
+                  'states': {'SPEED': 0, 'VITALITY': 0, 'STUN': 0, 'ROOT': 0, 'DIVINE_SHIELD': 0},
+                }
+              ],
+              'fallen': <Object>[],
+            },
+        ],
+      },
       'resolveLog': [
         {
           'characterId': 'a',
           'skipped': false,
+          'unplayed': false,
           'effects': [
             {
               'parts': ['Damage', 'ApplyState'],
@@ -347,6 +438,26 @@ void main() {
     }
   });
 
+  test('RoundResolved parses startOfResolve, the board with the faces Resolve played', () {
+    final raw = jsonDecode(File('test/fixtures/round_resolved.json').readAsStringSync()) as List;
+    expect(raw, isNotEmpty);
+    for (final j in raw) {
+      final json = j as Json;
+      final r = RoundResolved.fromJson(json);
+      final start = json['startOfResolve'] as Json;
+      expect(r.startOfResolve.phase, Phase.resolve);
+      expect(r.startOfResolve.currentRound, r.gameState.currentRound);
+      final faces = {
+        for (final p in start['players'] as List)
+          for (final c in (p as Json)['team'] as List) (c as Json)['id']: (c['face'] as Json)['description'],
+      };
+      final parsed = r.startOfResolve.players.expand((p) => p.team);
+      expect({for (final c in parsed) c.id: c.face.description}, faces);
+      // Every acting character of the log stands on the start board.
+      expect(r.resolveLog.map((s) => s.characterId).toSet().difference(faces.keys.toSet()), isEmpty);
+    }
+  });
+
   test('CharacterView parses modifiers and stats and defaults them to empty', () {
     final withStats = CharacterView.fromJson({
       ...character('a'),
@@ -408,5 +519,36 @@ void main() {
     expect(withStates.copyWith(hp: 1).states, withStates.states);
 
     expect(CharacterView.fromJson(character('a')).states, isEmpty);
+  });
+
+  group('the round preview of the Keep state', () {
+    Json recordedKeepBoard() =>
+        (jsonDecode(File('test/fixtures/round_start.json').readAsStringSync()) as List).first as Json;
+    Json recordedStep() =>
+        ((jsonDecode(File('test/fixtures/round_resolved.json').readAsStringSync()) as List).first
+            as Json)['resolveLog'][0] as Json;
+
+    test('a KEEP state with a preview parses to its steps, in order', () {
+      final step = recordedStep();
+      final skipped = {...step, 'skipped': true, 'effects': <Object>[], 'changes': <Object>[]};
+      final keep = {...recordedKeepBoard(), 'preview': [step, skipped]};
+
+      expectValid('GameStateDTO', keep);
+      final gs = GameStateView.fromJson(keep);
+      expect(gs.preview, hasLength(2));
+      expect(gs.preview.first.characterId, step['characterId']);
+      expect(gs.preview.first.skipped, isFalse);
+      expect(gs.preview.first.effects, hasLength((step['effects'] as List).length));
+      expect(gs.preview.first.changes, hasLength((step['changes'] as List).length));
+      expect(gs.preview.last.skipped, isTrue);
+    });
+
+    test('a state without a preview parses to an empty one', () {
+      final board = {...recordedKeepBoard()}..remove('preview');
+
+      expect(board.containsKey('preview'), isFalse);
+      expectValid('GameStateDTO', board);
+      expect(GameStateView.fromJson(board).preview, isEmpty);
+    });
   });
 }
